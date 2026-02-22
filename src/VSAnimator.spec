@@ -23,11 +23,18 @@ a = Analysis(
     hooksconfig={},
     runtime_hooks=[],
     excludes=[
-        'tkinter', 'unittest',
+        'tkinter', 'unittest', 'test',
         'pydoc', 'doctest', 'difflib',
+        'numpy', 'PIL', 'scipy', 'pandas',
+        'setuptools', 'pkg_resources',
+        'multiprocessing', 'concurrent',
+        'asyncio', 'sqlite3', 'csv',
+        'ftplib', 'imaplib', 'smtplib', 'poplib',
+        'xmlrpc', 'http.server',
+        'curses', 'lib2to3',
     ],
     noarchive=False,
-    optimize=0,
+    optimize=2,
 )
 
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
@@ -41,9 +48,9 @@ exe = EXE(
     name='VSAnimator',
     debug=False,
     bootloader_ignore_signals=False,
-    strip=False,
+    strip=True,
     upx=True,
-    upx_exclude=[],
+    upx_exclude=['vcruntime140.dll', 'python3.dll'],
     runtime_tmpdir=None,
     console=False,
     disable_windowed_traceback=False,
