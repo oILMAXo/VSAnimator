@@ -30,7 +30,7 @@ a = Analysis(
         'multiprocessing', 'concurrent',
         'asyncio', 'sqlite3', 'csv',
         'ftplib', 'imaplib', 'smtplib', 'poplib',
-        'xmlrpc', 'http.server',
+        'xmlrpc',
         'curses', 'lib2to3',
     ],
     noarchive=False,
