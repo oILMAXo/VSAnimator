@@ -25,3 +25,36 @@ _check.js
 nul
 *.png
 dt_ref.*
+tmpclaude-*
+_temp_check.js
+checker_tex.txt
+test_texture*_b64.txt
+test_texture_b64.txt
+uv_test.js
+vs-animator-original.html
+
+# Build artifacts
+*.exe
+upx.exe
+*.lnk
+
+# Old archives
+VSAnimator-v0.1-*.zip
+VSAnimator-v0.2-*.zip
+VSAnimator-v0.2-*.7z
+VSAnimator-v0.2-*.7z.zip
+
+# Tool configs
+.claude/
+.serena/
+vs-animator-prefs.json
+
+# Data files
+_seraph_shape.json
+_seraph_tex.txt
+
+# Scripts (not needed in repo)
+generate_presets.ps1
+patch_animator.py
+patch2_move_presets.py
+gen_icon.py

@@ -194,12 +194,21 @@ canvas{display:block;width:100%;height:100%}
 #tl-head button{padding:3px 10px;background:var(--panel);border:1px solid var(--border);border-radius:3px;color:var(--text);cursor:pointer;font-size:11px}
 #tl-head button:hover{background:#2a2a4a}
 #tl-head .info{margin-left:auto;color:var(--dim);font-size:12px}
-#track{position:relative;height:36px;background:var(--cv-bg,#0a0a18);border-radius:4px;border:1px solid var(--border);cursor:pointer;overflow:hidden}
+#track{position:relative;height:50px;background:var(--cv-bg,#0a0a18);border-radius:4px;border:1px solid var(--border);cursor:pointer;overflow:hidden}
 #track-nums{position:absolute;top:0;left:0;right:0;height:13px;pointer-events:none}
-#track-bar{position:absolute;top:13px;left:0;right:0;bottom:0}
-.kf-mk{position:absolute;top:50%;width:10px;height:10px;background:var(--green);transform:translate(-50%,-50%) rotate(45deg);cursor:pointer;border:1px solid rgba(255,255,255,.15);z-index:2}
-.kf-mk.act{background:var(--accent);width:12px;height:12px}
-#playhead{position:absolute;top:0;bottom:0;width:2px;background:var(--red);pointer-events:none;z-index:3}
+#track-bar-global{position:absolute;top:13px;left:0;right:0;height:16px;border-bottom:1px solid rgba(255,255,255,.05)}
+#track-bar-bone{position:absolute;top:30px;left:0;right:0;height:18px}
+.kf-mk-global{position:absolute;top:50%;width:7px;height:7px;background:var(--dim);transform:translate(-50%,-50%) rotate(45deg);cursor:pointer;border:1px solid rgba(255,255,255,.1);z-index:2;opacity:.5}
+.kf-mk-global.act{background:var(--accent);opacity:.7}
+.kf-mk-bone{position:absolute;top:50%;width:10px;height:10px;background:var(--green);transform:translate(-50%,-50%) rotate(45deg);cursor:pointer;border:1px solid rgba(255,255,255,.2);z-index:2}
+.kf-mk-bone.act{background:var(--accent);width:12px;height:12px}
+.kf-mk-bone.has-rot{background:var(--green)}
+.kf-mk-bone.has-off{background:var(--blue)}
+.kf-mk-bone.has-both{background:var(--accent)}
+.kf-mk-bone.selected{outline:2px solid #fff;outline-offset:1px;filter:brightness(1.4)}
+.kf-mk-global.selected{outline:2px solid #fff;outline-offset:1px;opacity:.9;filter:brightness(1.3)}
+#track-sel-rect{position:absolute;top:0;bottom:0;background:rgba(233,168,38,.15);border:1px solid rgba(233,168,38,.5);pointer-events:none;z-index:4;display:none}
+#playhead{position:absolute;top:0;bottom:0;width:2px;background:var(--red);pointer-events:none;z-index:5}
 ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
 /* Playback controls */
 #tl-controls{display:flex;align-items:center;gap:4px;margin-right:8px}
@@ -475,6 +484,7 @@ window._splashDone=function(){
                 <button class="btn-sm" onclick="dupAnimDoc()" style="margin:0;padding:3px 6px" title="Дублировать">⧉</button>
                 <button class="btn-sm" onclick="delAnimDoc()" style="margin:0;padding:3px 6px" title="Удалить анимацию">✕</button>
             </div>
+            <div id="animStatus" style="font-size:10px;margin-bottom:4px;padding:2px 6px;border-radius:3px;text-align:center;display:none"></div>
             <div style="display:flex;gap:4px;margin-bottom:6px">
                 <button class="btn-sm" onclick="addAnimDoc()" style="flex:1;padding:4px 0" data-i18n="newAnim">Новая анимация</button>
                 <button class="btn-sm" onclick="saveProject()" style="flex:1;padding:4px 0" data-i18n="saveJson">Сохранить JSON</button>
@@ -508,7 +518,13 @@ window._splashDone=function(){
             <div id="boneName" data-i18n="noSelBone">— не выбрана —</div>
             <div id="boneVsName"></div>
             <div id="rotControls">
-                <h3 style="font-size:11px;color:var(--accent);margin:4px 0;text-transform:uppercase;letter-spacing:.5px" data-i18n="propRot">Поворот</h3>
+                <div style="display:flex;align-items:center;gap:6px;margin:4px 0">
+                    <h3 style="font-size:11px;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;margin:0" data-i18n="propRot">Поворот</h3>
+                    <div style="display:flex;gap:2px;margin-left:auto">
+                        <button id="rotModeLocal" class="btn-sm active" onclick="setRotMode('local')" style="font-size:9px;padding:1px 6px" title="Локальные координаты">Лок</button>
+                        <button id="rotModeGlobal" class="btn-sm" onclick="setRotMode('global')" style="font-size:9px;padding:1px 6px" title="Глобальные координаты">Глоб</button>
+                    </div>
+                </div>
                 <div style="display:flex;gap:4px">
                     <div class="val-group"><span class="plbl" style="color:var(--red)">X</span><button onclick="nudgeInput('nX',0.5)">▲</button><input type="number" id="nX" value="0" step="0.5" onchange="onNum('X')"><button onclick="nudgeInput('nX',-0.5)">▼</button></div>
                     <div class="val-group"><span class="plbl" style="color:var(--green)">Y</span><button onclick="nudgeInput('nY',0.5)">▲</button><input type="number" id="nY" value="0" step="0.5" onchange="onNum('Y')"><button onclick="nudgeInput('nY',-0.5)">▼</button></div>
@@ -550,8 +566,10 @@ window._splashDone=function(){
             <button onclick="setFrame(Math.min(anim.frames,curFrame+1))" title="След. кадр">⏩</button>
             <button onclick="setFrame(anim.frames)" title="В конец">⏭</button>
         </div>
-        <button onclick="addKF()" data-i18n="kfAdd">＋ Кейфрейм</button>
-        <button onclick="removeKF()" data-i18n="kfRemove">－ Удалить</button>
+        <button onclick="addKF(false)" title="K — ключ кости / Shift+K — все кости">＋ Ключ</button>
+        <button onclick="removeKF(false)" title="Del — удалить ключ кости / Shift+Del — все">－ Удалить</button>
+        <button onclick="prevBoneKF()" title="[ — пред. ключ кости">◀</button>
+        <button onclick="nextBoneKF()" title="] — след. ключ кости">▶</button>
         <button onclick="copyKF()" data-i18n="kfCopy">Копировать</button>
         <button onclick="pasteKF()" data-i18n="kfPaste">Вставить</button>
         <span class="sep" style="display:inline-block;width:1px;height:18px;background:var(--border);margin:0 4px"></span>
@@ -566,7 +584,9 @@ window._splashDone=function(){
     </div>
     <div id="track" onmousedown="onTrackDown(event)">
         <div id="track-nums"></div>
-        <div id="track-bar"></div>
+        <div id="track-bar-global"></div>
+        <div id="track-bar-bone"></div>
+        <div id="track-sel-rect"></div>
         <div id="playhead"></div>
     </div>
 </div>
@@ -610,7 +630,7 @@ window.onerror=function(msg,src,line,col,err){alert('JS Error: '+msg+'\nLine: '+
 // ================================================================
 //  VS ANIMATOR — 3D Seraph Animation Editor
 // ================================================================
-const D2R = Math.PI / 180, PI = Math.PI;
+const D2R = Math.PI / 180, R2D = 180 / Math.PI, PI = Math.PI;
 function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
 
 // ---------- EMBEDDED SERAPH MODEL DATA ----------
@@ -823,7 +843,7 @@ function restoreDocState(d){
 }
 function switchTab(idx){
     if(idx===activeDocIdx)return;
-    stopPlay();
+    stopPlay();selectedKFs.clear();
     saveDocState();
     activeDocIdx=idx;
     restoreDocState(docs[idx]);
@@ -885,6 +905,7 @@ function markDirty(){
         if(!d.dirty){d.dirty=true; renderTabBar();}
     }
 }
+function isAnyDirty(){return docs.some(d=>d.dirty);}
 function renderTabBar(){
     const bar=document.getElementById('tabbar');
     let h='';
@@ -917,7 +938,9 @@ function tabDragEnd(){tabDragIdx=-1;document.querySelectorAll('.tab').forEach(t=
 // ---------- STATE (shadow globals — swapped per document) ----------
 let anim = {name:'BombardFire', code:'bombardfire', frames:10, endMode:'EaseOut', actStop:'EaseOut', animType:0, keyframes:[{frame:0, bones:{}}]};
 let curFrame = 0, selBone = null, hoverBone = null, playing = false, playRAF = null, playStart = 0, playFrame0 = 0, clipboard = null, loopPlayback = false;
+let rotMode = 'local'; // 'local' | 'global'
 let selBones = new Set(); // multi-selection set (includes selBone as primary)
+let selectedKFs = new Set(); // multi-selected keyframe frame numbers on timeline
 let _fpsFrames=0, _fpsLast=performance.now(), _fpsVal=0;
 let _debugOverlay=false;
 // ---------- UNDO / REDO ----------
@@ -991,6 +1014,22 @@ function rotMat(rx,ry,rz){
 }
 function mv3(m,v){return [m[0]*v[0]+m[1]*v[1]+m[2]*v[2], m[3]*v[0]+m[4]*v[1]+m[5]*v[2], m[6]*v[0]+m[7]*v[1]+m[8]*v[2]];}
 function mm3(a,b){const r=[];for(let i=0;i<3;i++)for(let j=0;j<3;j++)r[i*3+j]=a[i*3]*b[j]+a[i*3+1]*b[3+j]+a[i*3+2]*b[6+j];return r;}
+function matTranspose3(m){return [m[0],m[3],m[6], m[1],m[4],m[7], m[2],m[5],m[8]];}
+function matToEuler(m){
+    // Extract XYZ Euler from rotation matrix matching rotMat() convention:
+    // m[2]=sin(ry), m[5]=-sin(rx)*cos(ry), m[8]=cos(rx)*cos(ry), m[0]=cos(ry)*cos(rz), m[1]=-cos(ry)*sin(rz)
+    const sy=m[2];
+    if(Math.abs(sy)>=0.9999){
+        // Gimbal lock: ry≈±90°
+        const ry=Math.sign(sy)*90;
+        const rx=Math.atan2(m[3],m[4])*R2D;
+        return [rx,ry,0];
+    }
+    const ry=Math.asin(clamp(sy,-1,1))*R2D;
+    const rx=Math.atan2(-m[5],m[8])*R2D;
+    const rz=Math.atan2(-m[1],m[0])*R2D;
+    return [rx,ry,rz];
+}
 
 // ---------- FORWARD KINEMATICS (box elements) ----------
 function computeFK(rots,offsets){
@@ -1030,6 +1069,40 @@ function computeFK(rots,offsets){
         }
     }
     return fk;
+}
+
+// ---------- GLOBAL/LOCAL ROTATION CONVERSION ----------
+function getWorldRot(boneId,frame){
+    // Returns world Euler angles for a bone at given frame
+    const rots=getRotsAtFrame(frame);
+    const b=BM[boneId]; if(!b)return [0,0,0];
+    const localAnim=rots[boneId]||[0,0,0];
+    const lr=rotMat(b.rr[0]+localAnim[0],b.rr[1]+localAnim[1],b.rr[2]+localAnim[2]);
+    if(!b.p) return matToEuler(lr);
+    // Walk parent chain to get parent world rotation
+    const offsets=getOffsetsAtFrame(frame);
+    const fk=computeFK(rots,offsets);
+    const pf=fk[b.p]; if(!pf)return matToEuler(lr);
+    const wr=mm3(pf.wr,lr);
+    return matToEuler(wr);
+}
+function worldToLocalRot(boneId,worldEuler,frame){
+    // Converts desired world Euler → local animation delta
+    const b=BM[boneId]; if(!b)return [0,0,0];
+    const desiredWR=rotMat(worldEuler[0],worldEuler[1],worldEuler[2]);
+    let parentWR;
+    if(!b.p){parentWR=[1,0,0,0,1,0,0,0,1];}
+    else{
+        const rots=getRotsAtFrame(frame);
+        const offsets=getOffsetsAtFrame(frame);
+        const fk=computeFK(rots,offsets);
+        const pf=fk[b.p]; parentWR=pf?pf.wr:[1,0,0,0,1,0,0,0,1];
+    }
+    // localR = parentWR^-1 * desiredWR
+    const localR=mm3(matTranspose3(parentWR),desiredWR);
+    const localEuler=matToEuler(localR);
+    // Subtract base rotation to get animation delta
+    return [localEuler[0]-b.rr[0], localEuler[1]-b.rr[1], localEuler[2]-b.rr[2]];
 }
 
 // ---------- PER-BONE, PER-PROPERTY TRACK SYSTEM ----------
@@ -1964,16 +2037,50 @@ function selectBone(id){
     else{const b=BM[id];nameEl.textContent=b.vs||id+(selBones.size>1?' (+' +(selBones.size-1)+')':'');vsEl.textContent='id: '+id;rotEl.style.display='block';updateSliders();}
     if(editorMode==='model') fillElemProps();
     if(editorMode==='tex'){fillUvEditor();renderFacePreviews();}
-    updateBoneList();render();
+    updateBoneList();renderTimeline();render();
 }
 function updateSliders(){
     if(!selBone)return;
-    const rots=getRotsAtFrame(curFrame),r=rots[selBone]||[0,0,0];
-    ['X','Y','Z'].forEach((ax,i)=>{document.getElementById('n'+ax).value=r[i];});
+    if(rotMode==='global'){
+        const wr=getWorldRot(selBone,curFrame);
+        ['X','Y','Z'].forEach((ax,i)=>{document.getElementById('n'+ax).value=Math.round(wr[i]*100)/100;});
+    } else {
+        const rots=getRotsAtFrame(curFrame),r=rots[selBone]||[0,0,0];
+        ['X','Y','Z'].forEach((ax,i)=>{document.getElementById('n'+ax).value=r[i];});
+    }
     const offs=getOffsetsAtFrame(curFrame),o=offs[selBone]||[0,0,0];
     ['X','Y','Z'].forEach((ax,i)=>{document.getElementById('oN'+ax).value=o[i];});
+    // Update rotMode buttons
+    const btnL=document.getElementById('rotModeLocal'),btnG=document.getElementById('rotModeGlobal');
+    if(btnL){btnL.classList.toggle('active',rotMode==='local');}
+    if(btnG){btnG.classList.toggle('active',rotMode==='global');}
 }
-function onNum(axis){if(!selBone)return;let v=parseFloat(document.getElementById('n'+axis).value)||0;v=clamp(v,-180,180);document.getElementById('n'+axis).value=v;setBoneRot(axis,v);}
+function setRotMode(mode){rotMode=mode;updateSliders();}
+function onNum(axis){
+    if(!selBone)return;
+    let v=parseFloat(document.getElementById('n'+axis).value)||0;
+    v=clamp(v,-180,180);document.getElementById('n'+axis).value=v;
+    if(rotMode==='global'){setBoneRotGlobal(axis,v);}
+    else{setBoneRot(axis,v);}
+}
+function setBoneRotGlobal(axis,val){
+    // Read current global Euler, replace one axis, convert to local
+    const wr=getWorldRot(selBone,curFrame);
+    wr['XYZ'.indexOf(axis)]=val;
+    const localDelta=worldToLocalRot(selBone,wr,curFrame);
+    pushUndo();
+    const kf=getOrCreateKF(curFrame);
+    let entry=kf.bones[selBone];
+    if(entry&&!Array.isArray(entry)&&entry.o){entry=[0,0,0,entry.o[0]||0,entry.o[1]||0,entry.o[2]||0];kf.bones[selBone]=entry;}
+    if(!entry||!Array.isArray(entry)){kf.bones[selBone]=[0,0,0];entry=kf.bones[selBone];}
+    entry[0]=Math.round(localDelta[0]*100)/100;
+    entry[1]=Math.round(localDelta[1]*100)/100;
+    entry[2]=Math.round(localDelta[2]*100)/100;
+    if(entry.length<=3&&entry.every(v=>v===0))delete kf.bones[selBone];
+    else if(entry.length>=6&&entry.every(v=>v===0))delete kf.bones[selBone];
+    cleanupEmptyKF(curFrame);
+    markDirty();buildBoneTracks();updateBoneList();render();updateSliders();
+}
 // Direct keyframe setters for gizmo drag (no pushUndo, no rebuild)
 function _setAnimRot(kf,boneId,rv){
     let e=kf.bones[boneId];
@@ -2320,23 +2427,188 @@ function cleanupEmptyKF(frame){
     const i=anim.keyframes.findIndex(k=>k.frame===frame);
     if(i>=0&&Object.keys(anim.keyframes[i].bones).length===0){anim.keyframes.splice(i,1);renderTimeline();}
 }
-function addKF(){pushUndo(true);getOrCreateKF(curFrame);renderTimeline();}
-function removeKF(){const i=anim.keyframes.findIndex(k=>k.frame===curFrame);if(i>=0){pushUndo(true);anim.keyframes.splice(i,1);if(!anim.keyframes.length)anim.keyframes.push({frame:0,bones:{}});markDirty();buildBoneTracks();renderTimeline();render();updateSliders();updateBoneList();}}
+function addKF(allBones){
+    pushUndo(true);
+    const kf=getOrCreateKF(curFrame);
+    if(!allBones&&selBone){
+        // Per-bone: insert current bone's interpolated values as explicit keyframe
+        const rots=getRotsAtFrame(curFrame),r=rots[selBone]||[0,0,0];
+        const offs=getOffsetsAtFrame(curFrame),o=offs[selBone]||[0,0,0];
+        const hasOff=o[0]||o[1]||o[2];
+        if(hasOff){kf.bones[selBone]=[r[0],r[1],r[2],o[0],o[1],o[2]];}
+        else if(r[0]||r[1]||r[2]){kf.bones[selBone]=[r[0],r[1],r[2]];}
+        else{if(!kf.bones[selBone])kf.bones[selBone]=[0,0,0];}
+    }
+    markDirty();buildBoneTracks();renderTimeline();render();updateSliders();updateBoneList();
+}
+function removeKF(allBones){
+    if(!allBones&&selBone){
+        // Per-bone: remove only this bone's data from keyframe
+        const kf=anim.keyframes.find(k=>k.frame===curFrame);
+        if(!kf||!kf.bones[selBone])return;
+        pushUndo(true);
+        delete kf.bones[selBone];
+        cleanupEmptyKF(curFrame);
+        markDirty();buildBoneTracks();renderTimeline();render();updateSliders();updateBoneList();
+    } else {
+        // All bones: remove entire keyframe
+        const i=anim.keyframes.findIndex(k=>k.frame===curFrame);
+        if(i>=0){pushUndo(true);anim.keyframes.splice(i,1);if(!anim.keyframes.length)anim.keyframes.push({frame:0,bones:{}});markDirty();buildBoneTracks();renderTimeline();render();updateSliders();updateBoneList();}
+    }
+}
+function prevBoneKF(){
+    if(!selBone)return;
+    const track=rotTracks[selBone]||[];
+    const oTrack=offTracks[selBone]||[];
+    const allFrames=[...new Set([...track.map(k=>k.frame),...oTrack.map(k=>k.frame)])].sort((a,b)=>a-b);
+    for(let i=allFrames.length-1;i>=0;i--){if(allFrames[i]<curFrame){setFrame(allFrames[i]);return;}}
+}
+function nextBoneKF(){
+    if(!selBone)return;
+    const track=rotTracks[selBone]||[];
+    const oTrack=offTracks[selBone]||[];
+    const allFrames=[...new Set([...track.map(k=>k.frame),...oTrack.map(k=>k.frame)])].sort((a,b)=>a-b);
+    for(const f of allFrames){if(f>curFrame){setFrame(f);return;}}
+}
 function copyKF(){const kf=anim.keyframes.find(k=>k.frame===curFrame);if(kf)clipboard=JSON.parse(JSON.stringify(kf.bones));}
 function pasteKF(){if(!clipboard)return;pushUndo(true);const kf=getOrCreateKF(curFrame);kf.bones=JSON.parse(JSON.stringify(clipboard));markDirty();buildBoneTracks();render();updateSliders();updateBoneList();renderTimeline();}
 
+// ---------- KEYFRAME MULTI-SELECTION ----------
+function toggleKFSelection(frame){
+    if(selectedKFs.has(frame))selectedKFs.delete(frame);
+    else selectedKFs.add(frame);
+    renderTimeline();
+}
+function clearKFSelection(){
+    if(selectedKFs.size===0)return;
+    selectedKFs.clear();
+    renderTimeline();
+}
+function updateKFSelectionInfo(){
+    const fi=document.getElementById('frameInfo');
+    if(!fi)return;
+    if(selectedKFs.size>0){
+        fi.textContent=`Кадр ${curFrame} / ${anim.frames} | Выбрано: ${selectedKFs.size}`;
+    } else {
+        fi.textContent=`Кадр ${curFrame} / ${anim.frames}`;
+    }
+}
+function deleteSelectedKFs(allBones){
+    if(selectedKFs.size===0)return;
+    pushUndo(true);
+    const frames=[...selectedKFs].sort((a,b)=>b-a); // delete from end to avoid index shifts
+    for(const f of frames){
+        const i=anim.keyframes.findIndex(k=>k.frame===f);
+        if(i<0)continue;
+        if(!allBones&&selBone){
+            delete anim.keyframes[i].bones[selBone];
+            if(Object.keys(anim.keyframes[i].bones).length===0&&anim.keyframes.length>1)anim.keyframes.splice(i,1);
+        } else {
+            anim.keyframes.splice(i,1);
+        }
+    }
+    if(!anim.keyframes.length)anim.keyframes.push({frame:0,bones:{}});
+    selectedKFs.clear();
+    markDirty();buildBoneTracks();renderTimeline();render();updateSliders();updateBoneList();
+}
+function moveSelectedKFs(delta){
+    if(selectedKFs.size===0||delta===0)return;
+    const frames=[...selectedKFs].sort((a,b)=>delta>0?b-a:a-b);
+    // Check boundaries
+    for(const f of frames){
+        const nf=f+delta;
+        if(nf<0||nf>anim.frames)return;
+        if(!selectedKFs.has(nf)&&anim.keyframes.some(k=>k.frame===nf))return; // collision with unselected
+    }
+    pushUndo(true);
+    for(const f of frames){
+        const kf=anim.keyframes.find(k=>k.frame===f);
+        if(kf)kf.frame=f+delta;
+    }
+    const newSel=new Set(frames.map(f=>f+delta));
+    selectedKFs.clear();
+    for(const f of newSel)selectedKFs.add(f);
+    sortKFs();markDirty();buildBoneTracks();renderTimeline();render();updateSliders();updateBoneList();
+}
+
 // ---------- TIMELINE ----------
 function renderTimeline(){
-    const bar=document.getElementById('track-bar'),nums=document.getElementById('track-nums');
-    bar.innerHTML='';nums.innerHTML='';
+    const barG=document.getElementById('track-bar-global'),barB=document.getElementById('track-bar-bone'),nums=document.getElementById('track-nums');
+    barG.innerHTML='';barB.innerHTML='';nums.innerHTML='';
     const total=anim.frames,step=total<=20?1:total<=50?5:10;
     for(let f=0;f<=total;f+=step){const pct=(f/total)*100;const s=document.createElement('span');s.style.cssText=`position:absolute;left:${pct}%;font-size:9px;color:#444;transform:translateX(-50%)`;s.textContent=f;nums.appendChild(s);}
-    for(const kf of anim.keyframes){const pct=(kf.frame/total)*100;const mk=document.createElement('div');mk.className='kf-mk'+(kf.frame===curFrame?' act':'');mk.style.left=pct+'%';mk.title='Кадр '+kf.frame;mk.addEventListener('mousedown',e=>{e.stopPropagation();setFrame(kf.frame);});bar.appendChild(mk);}
+    // Global keyframe markers (all bones, dimmed)
+    for(const kf of anim.keyframes){const pct=(kf.frame/total)*100;const mk=document.createElement('div');mk.className='kf-mk-global'+(kf.frame===curFrame?' act':'')+(selectedKFs.has(kf.frame)?' selected':'');mk.style.left=pct+'%';mk.title='Кадр '+kf.frame+' (все кости)';mk.dataset.frame=kf.frame;mk.addEventListener('mousedown',e=>{if(e.shiftKey){e.stopPropagation();e.preventDefault();toggleKFSelection(kf.frame);return;}e.stopPropagation();clearKFSelection();setFrame(kf.frame);});barG.appendChild(mk);}
+    // Per-bone keyframe markers (selected bone, bright)
+    if(selBone){
+        const boneFrames=new Set();
+        const rTrack=rotTracks[selBone]||[];
+        const oTrack=offTracks[selBone]||[];
+        rTrack.forEach(kf=>boneFrames.add(kf.frame));
+        oTrack.forEach(kf=>boneFrames.add(kf.frame));
+        for(const f of boneFrames){
+            const pct=(f/total)*100;
+            const hasR=rTrack.some(k=>k.frame===f);
+            const hasO=oTrack.some(k=>k.frame===f);
+            const cls=hasR&&hasO?'has-both':hasO?'has-off':'has-rot';
+            const mk=document.createElement('div');
+            mk.className='kf-mk-bone '+cls+(f===curFrame?' act':'')+(selectedKFs.has(f)?' selected':'');
+            mk.style.left=pct+'%';
+            mk.title=(BM[selBone]?.vs||selBone)+' — кадр '+f+(hasR?' [rot]':'')+(hasO?' [off]':'');
+            mk.dataset.frame=f;
+            mk.addEventListener('mousedown',e=>{if(e.shiftKey){e.stopPropagation();e.preventDefault();toggleKFSelection(f);return;}e.stopPropagation();clearKFSelection();setFrame(f);});
+            barB.appendChild(mk);
+        }
+    }
     document.getElementById('playhead').style.left=((curFrame/total)*100)+'%';
-    document.getElementById('frameInfo').textContent=`Кадр ${curFrame} / ${total}`;
+    // Update selection info (must be after playhead update)
+    updateKFSelectionInfo();
 }
 function onTrackDown(e){
     const track=document.getElementById('track'),rect=track.getBoundingClientRect();
+    if(e.shiftKey){
+        // Shift+drag: rectangle selection on timeline
+        e.preventDefault();
+        const selRect=document.getElementById('track-sel-rect');
+        const startX=e.clientX;
+        const startPct=clamp((startX-rect.left)/rect.width,0,1);
+        const startFrame=Math.round(startPct*anim.frames);
+        selRect.style.display='block';
+        selRect.style.left=(startPct*100)+'%';selRect.style.width='0%';
+        // Collect all keyframe frame numbers that have markers (bone or global)
+        function getVisibleFrames(){
+            const frames=new Set();
+            anim.keyframes.forEach(kf=>frames.add(kf.frame));
+            if(selBone){
+                (rotTracks[selBone]||[]).forEach(k=>frames.add(k.frame));
+                (offTracks[selBone]||[]).forEach(k=>frames.add(k.frame));
+            }
+            return frames;
+        }
+        function updSel(ex){
+            const curPct=clamp((ex-rect.left)/rect.width,0,1);
+            const lo=Math.min(startPct,curPct),hi=Math.max(startPct,curPct);
+            selRect.style.left=(lo*100)+'%';selRect.style.width=((hi-lo)*100)+'%';
+            const fLo=Math.round(lo*anim.frames),fHi=Math.round(hi*anim.frames);
+            selectedKFs.clear();
+            for(const f of getVisibleFrames()){if(f>=fLo&&f<=fHi)selectedKFs.add(f);}
+            renderTimeline();
+        }
+        function onM(ev){updSel(ev.clientX);}
+        function onU(ev){
+            selRect.style.display='none';
+            window.removeEventListener('mousemove',onM);window.removeEventListener('mouseup',onU);
+            // If it was just a click (no drag), toggle single frame
+            if(Math.abs(ev.clientX-startX)<3){
+                toggleKFSelection(startFrame);
+            }
+            renderTimeline();
+        }
+        window.addEventListener('mousemove',onM);window.addEventListener('mouseup',onU);
+        return;
+    }
+    // Normal click: clear selection and scrub
+    clearKFSelection();
     function upd(ex){setFrame(Math.round(clamp((ex-rect.left)/rect.width,0,1)*anim.frames));}
     upd(e.clientX);
     function onM(ev){upd(ev.clientX);}
@@ -2347,14 +2619,14 @@ function setFrame(f){curFrame=clamp(f,0,anim.frames);updateSliders();updateBoneL
 
 // ---------- PLAYBACK ----------
 function togglePlay(){playing?stopPlay():startPlay();}
-function startPlay(){playing=true;const btn=document.getElementById('btnPlay');btn.textContent='⏸';btn.classList.add('active');playStart=performance.now();playFrame0=curFrame;playStep();}
+function startPlay(){playing=true;selectedKFs.clear();const btn=document.getElementById('btnPlay');btn.textContent='⏸';btn.classList.add('active');playStart=performance.now();playFrame0=curFrame;playStep();}
 function stopPlay(){playing=false;const btn=document.getElementById('btnPlay');btn.textContent='▶';btn.classList.remove('active');if(playRAF)cancelAnimationFrame(playRAF);playRAF=null;}
 function updatePlayhead(){
     const pct=anim.frames>0?((curFrame/anim.frames)*100):0;
     const ph=document.getElementById('playhead');if(ph)ph.style.left=pct+'%';
-    const fi=document.getElementById('frameInfo');if(fi)fi.textContent=`Кадр ${curFrame} / ${anim.frames}`;
-    // Update active keyframe marker
-    document.querySelectorAll('.kf-mk').forEach(m=>{const f=parseInt(m.title.replace('Кадр ',''));m.classList.toggle('act',f===curFrame);});
+    updateKFSelectionInfo();
+    // Update active keyframe markers
+    document.querySelectorAll('.kf-mk-global,.kf-mk-bone').forEach(m=>{const match=m.title.match(/кадр (\d+)/i);if(match)m.classList.toggle('act',parseInt(match[1])===curFrame);});
 }
 function playStep(){
     if(!playing)return;
@@ -2424,7 +2696,8 @@ const I18N={
         dlgNewTab:'Новая вкладка',dlgNewObj:'Новый объект',dlgSeraph:'Серафим',dlgImport:'Импорт файла',
         dlgNewObjDesc:'Пустая модель для<br>создания с нуля',dlgSeraphDesc:'Скелет персонажа<br>для анимации',dlgImportDesc:'Загрузить .json<br>модель или анимацию',
         tabObject:'Объект',tabSeraph:'Серафим',
-        themeBlue:'🔵 Синяя',themeDark:'⚫ Тёмная',themeLight:'⚪ Светлая'
+        themeBlue:'🔵 Синяя',themeDark:'⚫ Тёмная',themeLight:'⚪ Светлая',
+        rotLocal:'Лок',rotGlobal:'Глоб',animReadonly:'🔒 Только чтение',animEditable:'✏️ Редактируемая'
     },
     en:{
         menuFile:'File',menuEdit:'Edit',menuView:'View',menuSettings:'Settings',
@@ -2446,7 +2719,8 @@ const I18N={
         dlgNewTab:'New Tab',dlgNewObj:'New Object',dlgSeraph:'Seraph',dlgImport:'Import File',
         dlgNewObjDesc:'Empty model<br>from scratch',dlgSeraphDesc:'Character skeleton<br>for animation',dlgImportDesc:'Load .json<br>model or animation',
         tabObject:'Object',tabSeraph:'Seraph',
-        themeBlue:'🔵 Blue',themeDark:'⚫ Dark',themeLight:'⚪ Light'
+        themeBlue:'🔵 Blue',themeDark:'⚫ Dark',themeLight:'⚪ Light',
+        rotLocal:'Loc',rotGlobal:'Glob',animReadonly:'🔒 Read-only',animEditable:'✏️ Editable'
     }
 };
 function setLang(lang){
@@ -2776,12 +3050,21 @@ document.addEventListener('keydown',e=>{
     }
     if(editorMode==='anim'){
         if(e.key===' '){e.preventDefault();togglePlay();}
-        if(e.key==='ArrowRight'){e.preventDefault();setFrame(curFrame+1);}
-        if(e.key==='ArrowLeft'){e.preventDefault();setFrame(curFrame-1);}
-        if(e.key==='Home'){e.preventDefault();setFrame(0);}
-        if(e.key==='End'){e.preventDefault();setFrame(anim.frames);}
-        if(e.key==='Delete'&&selBone)resetRot();
-        if(e.key==='k'||e.key==='K')addKF();
+        if(e.key==='ArrowRight'&&selectedKFs.size>0&&e.shiftKey){e.preventDefault();moveSelectedKFs(1);return;}
+        if(e.key==='ArrowLeft'&&selectedKFs.size>0&&e.shiftKey){e.preventDefault();moveSelectedKFs(-1);return;}
+        if(e.key==='ArrowRight'){e.preventDefault();clearKFSelection();setFrame(curFrame+1);}
+        if(e.key==='ArrowLeft'){e.preventDefault();clearKFSelection();setFrame(curFrame-1);}
+        if(e.key==='Home'){e.preventDefault();clearKFSelection();setFrame(0);}
+        if(e.key==='End'){e.preventDefault();clearKFSelection();setFrame(anim.frames);}
+        if(e.key==='Delete'){
+            if(selectedKFs.size>0){e.preventDefault();deleteSelectedKFs(e.shiftKey);return;}
+            if(selBone){if(e.shiftKey)removeKF(true);else removeKF(false);}
+        }
+        if(e.key==='k'||e.key==='K'){if(e.shiftKey)addKF(true);else addKF(false);}
+        if(e.key==='Escape'&&selectedKFs.size>0){clearKFSelection();return;}
+        if(isCtrl&&(e.code==='KeyA'||e.keyCode===65)){e.preventDefault();selectedKFs.clear();anim.keyframes.forEach(kf=>selectedKFs.add(kf.frame));renderTimeline();return;}
+        if(e.key==='[')prevBoneKF();
+        if(e.key===']')nextBoneKF();
     }
     if(isCtrl&&(e.code==='KeyC'||e.keyCode===67)){e.preventDefault();copyKF();}
     if(isCtrl&&(e.code==='KeyV'||e.keyCode===86)){e.preventDefault();pasteKF();}
@@ -2792,17 +3075,28 @@ document.addEventListener('keydown',e=>{
 },true);
 
 // ---------- MULTI-ANIMATION ----------
+function updateAnimStatus(){
+    const el=document.getElementById('animStatus');if(!el)return;
+    if(anim&&anim._isPreset){
+        el.style.display='block';el.style.background='rgba(231,76,60,0.15)';el.style.color='var(--red)';
+        el.textContent='\ud83d\udd12 \u0422\u043e\u043b\u044c\u043a\u043e \u0447\u0442\u0435\u043d\u0438\u0435 \u2014 \u0440\u0435\u0434\u0430\u043a\u0442\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u0435 \u0441\u043e\u0437\u0434\u0430\u0441\u0442 \u043a\u043e\u043f\u0438\u044e';
+    } else {
+        el.style.display='block';el.style.background='rgba(46,204,113,0.12)';el.style.color='var(--green)';
+        el.textContent='\u270f\ufe0f \u0420\u0435\u0434\u0430\u043a\u0442\u0438\u0440\u0443\u0435\u043c\u0430\u044f';
+    }
+}
 function renderAnimList(){
     const doc=docs[activeDocIdx];if(!doc||!doc.anims)return;
     const sel=document.getElementById('animSelect');
     sel.innerHTML='';
+    updateAnimStatus();
     // Custom animations group
     const grpCustom=document.createElement('optgroup');
     grpCustom.label='\u041c\u043e\u0438 \u0430\u043d\u0438\u043c\u0430\u0446\u0438\u0438';
     doc.anims.forEach((a,i)=>{
         const opt=document.createElement('option');
         opt.value='doc_'+i;
-        opt.textContent=(a._isPreset?'\ud83d\udd12 ':'')+(a.name||a.code||'Anim '+(i+1));
+        opt.textContent=(a._isPreset?'\ud83d\udd12 ':'\u270f\ufe0f ')+(a.name||a.code||'Anim '+(i+1));
         opt.selected=i===doc.activeAnimIdx&&activePresetIdx<0;
         grpCustom.appendChild(opt);
     });
@@ -2932,8 +3226,8 @@ function forkPresetToCopy(){
     anim.code=(anim.code||'anim')+'_custom';
     const doc=docs[activeDocIdx];
     if(doc&&doc.anims){doc.anims[doc.activeAnimIdx]=anim;doc.name=anim.name;}
-    showNotification('Копия: '+anim.name);
-    renderAnimList();renderPresets();renderTabBar();
+    showNotification('\u2705 \u041a\u043e\u043f\u0438\u044f \u0441\u043e\u0437\u0434\u0430\u043d\u0430: '+anim.name+' \u2014 \u043c\u043e\u0436\u043d\u043e \u0440\u0435\u0434\u0430\u043a\u0442\u0438\u0440\u043e\u0432\u0430\u0442\u044c');
+    updateAnimStatus();renderAnimList();renderPresets();renderTabBar();
 }
 function showNotification(msg){
     let el=document.getElementById('toast-notif');
@@ -2969,7 +3263,7 @@ function loadPreset(i){
     curFrame=0;selBone=null;clipboard=null;
     if(activeDocIdx>=0){docs[activeDocIdx].name=anim.name;
         const doc=docs[activeDocIdx];if(doc.anims){doc.anims[doc.activeAnimIdx]=anim;}else{doc.anims=[anim];doc.activeAnimIdx=0;}}
-    markDirty();buildBoneTracks();loadSettings();selectBone(null);renderTimeline();render();renderPresets();renderTabBar();renderAnimList();
+    markDirty();buildBoneTracks();loadSettings();selectBone(null);renderTimeline();render();renderPresets();renderTabBar();renderAnimList();updateAnimStatus();
 }
 
 // ---------- UV EDITOR ----------
@@ -3420,6 +3714,7 @@ async function init(){
     document.getElementById('ntdTitle').textContent='VS Animator';
     showNewTabDialog();
     window.addEventListener('resize',resizeCanvas);
+    window.addEventListener('beforeunload',e=>{if(isAnyDirty()){e.preventDefault();e.returnValue='';}});
     // Keyboard shortcuts (Ctrl+Z/Y handled in main keydown above — no duplicate!)
     document.addEventListener('keydown',e=>{
         if(e.ctrlKey&&e.code==='KeyN'){e.preventDefault();newAnim();}
