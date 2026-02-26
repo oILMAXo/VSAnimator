@@ -23,18 +23,16 @@ a = Analysis(
     hooksconfig={},
     runtime_hooks=[],
     excludes=[
-        'tkinter', 'unittest', 'test',
+        'unittest', 'test',
         'pydoc', 'doctest', 'difflib',
         'numpy', 'PIL', 'scipy', 'pandas',
-        'setuptools', 'pkg_resources',
-        'multiprocessing', 'concurrent',
-        'asyncio', 'sqlite3', 'csv',
+        'sqlite3', 'csv',
         'ftplib', 'imaplib', 'smtplib', 'poplib',
         'xmlrpc',
         'curses', 'lib2to3',
     ],
     noarchive=False,
-    optimize=2,
+    optimize=0,
 )
 
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
