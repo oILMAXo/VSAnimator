@@ -37,8 +37,10 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 
 #main{display:flex;flex:1;overflow:hidden}
 
-/* Elements section in right panel */
-#rp-elements{display:flex;flex-direction:column;flex-shrink:0;max-height:40%;border-bottom:1px solid var(--border);overflow:hidden}
+/* Right panel sections */
+#rp-top-section{display:flex;flex-direction:column;height:50%;min-height:80px;overflow:hidden;flex-shrink:0}
+#rp-bottom-section{display:flex;flex-direction:column;flex:1;overflow:hidden}
+#rp-elements{display:flex;flex-direction:column;flex:1;overflow:hidden}
 #rp-elements h3{font-size:11px;color:var(--accent);padding:8px 10px 5px;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);flex-shrink:0}
 #boneList{flex:1;overflow-y:auto;padding:4px 0}
 .bi{padding:3px 8px;border-radius:3px;cursor:pointer;font-size:11px;display:flex;align-items:center;gap:5px;white-space:nowrap}
@@ -52,6 +54,8 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 .bi-tog.leaf{visibility:hidden;cursor:default}
 .splitter{width:4px;background:var(--border);cursor:col-resize;flex-shrink:0;transition:background .15s}
 .splitter:hover,.splitter.active{background:var(--accent)}
+.hsplitter{height:4px;background:var(--border);cursor:row-resize;flex-shrink:0;transition:background .15s}
+.hsplitter:hover,.hsplitter.active{background:var(--accent)}
 .bi-eye,.bi-solo{font-size:10px;cursor:pointer;opacity:.4;flex-shrink:0;padding:0 2px;user-select:none}
 .bi-eye:hover,.bi-solo:hover{opacity:.8}.bi-eye.off,.bi-solo.off{opacity:.18}
 .bi.hid>span:not(.bi-eye):not(.bi-solo):not(.bi-tog){opacity:.35}
@@ -66,7 +70,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 .gizmo-btn:hover{background:var(--bg2);color:var(--text);border-color:var(--text)}
 .gizmo-btn.active{background:var(--accent);color:#000;border-color:var(--accent)}
 /* Model properties */
-#rp-model{padding:8px 10px;flex-shrink:0;overflow-y:auto}
+#rp-model{padding:8px 10px;overflow-y:auto}
 #rp-model h3{font-size:11px;color:var(--accent);margin:8px 0 4px;padding-bottom:3px;border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.5px}
 #rp-model h3:first-child{margin-top:0}
 .prop-row{display:flex;align-items:center;gap:4px;margin:3px 0}
@@ -286,14 +290,14 @@ window._splashDone=function(){
         </div>
     </div>
     <div class="menu-item" id="menu-edit">
-        <button class="menu-item-btn" onclick="toggleMenu('menu-edit')">Правка</button>
+        <button class="menu-item-btn" onclick="toggleMenu('menu-edit')" data-i18n="menuEdit">Правка</button>
         <div class="menu-dropdown">
             <button class="menu-dropdown-item" onclick="undo();closeMenus();">
-                <span>↩ Отменить</span>
+                <span>↩ <span data-i18n="mUndo">Отменить</span></span>
                 <span class="shortcut">Ctrl+Z</span>
             </button>
             <button class="menu-dropdown-item" onclick="redo();closeMenus();">
-                <span>↪ Повторить</span>
+                <span>↪ <span data-i18n="mRedo">Повторить</span></span>
                 <span class="shortcut">Ctrl+Y</span>
             </button>
         </div>
@@ -373,93 +377,98 @@ window._splashDone=function(){
     </div>
     <div class="splitter" id="splitterR"></div>
     <div id="rpanel">
-        <div id="rp-elements">
-            <h3>Элементы</h3>
-            <div id="boneList"></div>
-        </div>
-        <div class="mode-tabs" id="modeTabs">
-            <button onclick="setEditorMode('model')">Модель</button>
-            <button class="active" onclick="setEditorMode('anim')">Анимация</button>
-            <button onclick="setEditorMode('tex')">Текстуры</button>
-        </div>
-        <div class="gizmo-bar" id="gizmoBar">
+        <div id="rp-top-section">
+            <div id="rp-elements">
+                <h3>Элементы</h3>
+                <div id="boneList"></div>
+            </div>
+            <div class="mode-tabs" id="modeTabs">
+                <button onclick="setEditorMode('model')">Модель</button>
+                <button class="active" onclick="setEditorMode('anim')">Анимация</button>
+                <button onclick="setEditorMode('tex')" data-i18n="textures">Текстуры</button>
+            </div>
+            <div class="gizmo-bar" id="gizmoBar">
             <button class="gizmo-btn active" id="gzMove" onclick="setGizmo('move')" title="Переместить (W)">✥</button>
             <button class="gizmo-btn" id="gzRotate" onclick="setGizmo('rotate')" title="Повернуть (E)">↻</button>
             <button class="gizmo-btn" id="gzScale" onclick="setGizmo('scale')" title="Масштаб (R)">⤢</button>
             <span style="width:1px;background:var(--border);margin:2px 4px"></span>
             <button class="gizmo-btn active" id="gzTex" onclick="toggleTextures()" title="Текстуры (T)">TX</button>
         </div>
+        <div id="rp-actions" style="padding:4px 8px;border-top:1px solid var(--border);flex-shrink:0">
+            <div class="act-bar">
+                <button onclick="addElement()" data-i18n="actAdd">＋ Элемент</button>
+                <button onclick="addChildElement()" data-i18n="actChild">＋ Дочерний</button>
+                <button onclick="duplicateElement()" data-i18n="actCopy">Копия</button>
+                <button class="danger" onclick="deleteElement()" data-i18n="actDelete">Удалить</button>
+            </div>
+        </div>
+        </div>
+        <div class="hsplitter" id="hsplitterR"></div>
+        <div id="rp-bottom-section">
         <div id="rp-model" style="display:none">
-            <h3>Элемент</h3>
-            <div id="elemEmpty">— не выбран —</div>
+            <h3 data-i18n="element">Элемент</h3>
+            <div id="elemEmpty" data-i18n="noSelection">— не выбран —</div>
             <div id="elemProps" style="display:none">
-                <div class="prop-row"><span class="plbl">Имя</span><input type="text" id="epName" onchange="onElemPropChange()"></div>
-                <h3>From</h3>
+                <div class="prop-row"><span class="plbl" data-i18n="propName">Имя</span><input type="text" id="epName" onchange="onElemPropChange()"></div>
+                <h3 data-i18n="propFrom">Начало</h3>
                 <div style="display:flex;gap:4px">
                     <div class="val-group"><span class="plbl">X</span><button onclick="nudgeInput('epFX',0.5)">▲</button><input type="number" id="epFX" step="0.5" onchange="onElemPropChange()"><button onclick="nudgeInput('epFX',-0.5)">▼</button></div>
                     <div class="val-group"><span class="plbl">Y</span><button onclick="nudgeInput('epFY',0.5)">▲</button><input type="number" id="epFY" step="0.5" onchange="onElemPropChange()"><button onclick="nudgeInput('epFY',-0.5)">▼</button></div>
                     <div class="val-group"><span class="plbl">Z</span><button onclick="nudgeInput('epFZ',0.5)">▲</button><input type="number" id="epFZ" step="0.5" onchange="onElemPropChange()"><button onclick="nudgeInput('epFZ',-0.5)">▼</button></div>
                 </div>
-                <h3>To</h3>
+                <h3 data-i18n="propTo">Конец</h3>
                 <div style="display:flex;gap:4px">
                     <div class="val-group"><span class="plbl">X</span><button onclick="nudgeInput('epTX',0.5)">▲</button><input type="number" id="epTX" step="0.5" onchange="onElemPropChange()"><button onclick="nudgeInput('epTX',-0.5)">▼</button></div>
                     <div class="val-group"><span class="plbl">Y</span><button onclick="nudgeInput('epTY',0.5)">▲</button><input type="number" id="epTY" step="0.5" onchange="onElemPropChange()"><button onclick="nudgeInput('epTY',-0.5)">▼</button></div>
                     <div class="val-group"><span class="plbl">Z</span><button onclick="nudgeInput('epTZ',0.5)">▲</button><input type="number" id="epTZ" step="0.5" onchange="onElemPropChange()"><button onclick="nudgeInput('epTZ',-0.5)">▼</button></div>
                 </div>
-                <h3>Pivot (Origin)</h3>
+                <h3 data-i18n="propPivot">Точка вращения</h3>
                 <div style="display:flex;gap:4px">
                     <div class="val-group"><span class="plbl">X</span><button onclick="nudgeInput('epOX',0.5)">▲</button><input type="number" id="epOX" step="0.5" onchange="onElemPropChange()"><button onclick="nudgeInput('epOX',-0.5)">▼</button></div>
                     <div class="val-group"><span class="plbl">Y</span><button onclick="nudgeInput('epOY',0.5)">▲</button><input type="number" id="epOY" step="0.5" onchange="onElemPropChange()"><button onclick="nudgeInput('epOY',-0.5)">▼</button></div>
                     <div class="val-group"><span class="plbl">Z</span><button onclick="nudgeInput('epOZ',0.5)">▲</button><input type="number" id="epOZ" step="0.5" onchange="onElemPropChange()"><button onclick="nudgeInput('epOZ',-0.5)">▼</button></div>
                 </div>
-                <h3>Поворот</h3>
+                <h3 data-i18n="propRot">Поворот</h3>
                 <div style="display:flex;gap:4px">
                     <div class="val-group"><span class="plbl">X</span><button onclick="nudgeInput('epRX',0.5)">▲</button><input type="number" id="epRX" step="0.5" onchange="onElemPropChange()"><button onclick="nudgeInput('epRX',-0.5)">▼</button></div>
                     <div class="val-group"><span class="plbl">Y</span><button onclick="nudgeInput('epRY',0.5)">▲</button><input type="number" id="epRY" step="0.5" onchange="onElemPropChange()"><button onclick="nudgeInput('epRY',-0.5)">▼</button></div>
                     <div class="val-group"><span class="plbl">Z</span><button onclick="nudgeInput('epRZ',0.5)">▲</button><input type="number" id="epRZ" step="0.5" onchange="onElemPropChange()"><button onclick="nudgeInput('epRZ',-0.5)">▼</button></div>
                 </div>
             </div>
-            <h3>Действия</h3>
-            <div class="act-bar">
-                <button onclick="addElement()">＋ Элемент</button>
-                <button onclick="addChildElement()">＋ Дочерний</button>
-                <button onclick="duplicateElement()">Копия</button>
-                <button class="danger" onclick="deleteElement()">Удалить</button>
-            </div>
             <div id="modelAnimList" style="display:none">
-                <h3>Анимации</h3>
+                <h3 data-i18n="animations">Анимации</h3>
                 <div id="modelAnimItems"></div>
             </div>
         </div>
         <div id="rp-tex" style="display:none">
             <div id="uvElemName">— элемент не выбран —</div>
-            <h3>Текстура</h3>
+            <h3 data-i18n="textures">Текстура</h3>
             <div class="tex-face-actions">
-                <button onclick="openTexImportDialog()">📁 Импорт</button>
-                <button onclick="clearFaceTex()" class="danger">✕ Удалить</button>
-                <button onclick="copyFaceTex()">📋 Копия</button>
-                <button onclick="pasteFaceTex(event)">📌 Вставка</button>
+                <button onclick="openTexImportDialog()" data-i18n="texImport">📁 Импорт</button>
+                <button onclick="clearFaceTex()" class="danger" data-i18n="texDelete">✕ Удалить</button>
+                <button onclick="copyFaceTex()" data-i18n="texCopy">📋 Копия</button>
+                <button onclick="pasteFaceTex(event)" data-i18n="texPaste">📌 Вставка</button>
             </div>
             <div id="uvTexInfo"></div>
-            <h3>Face UV</h3>
+            <h3 data-i18n="texFaceUV">Face UV</h3>
             <div id="uvFaceInputs"></div>
-            <h3>Поворот</h3>
+            <h3 data-i18n="texRotation">Поворот</h3>
             <div id="uvRotation" class="uv-rot-bar">
                 <button class="uv-rot-btn active" onclick="setUvRotation(0)">0°</button>
                 <button class="uv-rot-btn" onclick="setUvRotation(90)">90°</button>
                 <button class="uv-rot-btn" onclick="setUvRotation(180)">180°</button>
                 <button class="uv-rot-btn" onclick="setUvRotation(270)">270°</button>
             </div>
-            <h3>Свойства</h3>
+            <h3 data-i18n="texProps">Свойства</h3>
             <div id="uvProps"></div>
-            <h3>Размеры UV</h3>
+            <h3 data-i18n="texUVSize">Размеры UV</h3>
             <div id="uvMeta"></div>
-            <h3>Текстуры модели</h3>
+            <h3 data-i18n="texModelTex">Текстуры модели</h3>
             <div id="texDict"></div>
-            <button class="btn-sm" onclick="addTextureEntry()" style="margin-top:4px;width:100%">+ Добавить текстуру</button>
+            <button class="btn-sm" onclick="addTextureEntry()" style="margin-top:4px;width:100%" data-i18n="texAdd">+ Добавить текстуру</button>
         </div>
         <div id="rp-top">
-            <h3>Анимации</h3>
+            <h3 data-i18n="animations">Анимации</h3>
             <div id="animBar" style="display:flex;align-items:center;gap:4px;margin-bottom:6px">
                 <select id="animSelect" onchange="switchAnimSel(this.selectedIndex)" style="flex:1;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:3px 6px;border-radius:3px;font-size:11px"></select>
                 <button class="btn-sm" onclick="addAnimDoc()" style="margin:0;padding:3px 6px" title="Новая анимация">＋</button>
@@ -467,19 +476,19 @@ window._splashDone=function(){
                 <button class="btn-sm" onclick="delAnimDoc()" style="margin:0;padding:3px 6px" title="Удалить анимацию">✕</button>
             </div>
             <div style="display:flex;gap:4px;margin-bottom:6px">
-                <button class="btn-sm" onclick="addAnimDoc()" style="flex:1;padding:4px 0">Новая анимация</button>
-                <button class="btn-sm" onclick="saveProject()" style="flex:1;padding:4px 0">Сохранить JSON</button>
+                <button class="btn-sm" onclick="addAnimDoc()" style="flex:1;padding:4px 0" data-i18n="newAnim">Новая анимация</button>
+                <button class="btn-sm" onclick="saveProject()" style="flex:1;padding:4px 0" data-i18n="saveJson">Сохранить JSON</button>
             </div>
-            <div class="field"><span class="lbl">Имя:</span><input type="text" id="fName" value="BombardFire" onchange="syncSettings()"></div>
-            <div class="field"><span class="lbl">Код:</span><input type="text" id="fCode" value="bombardfire" onchange="syncSettings()"></div>
-            <div class="field"><span class="lbl">Кадров:</span><input type="number" id="fFrames" value="10" min="1" max="300" onchange="syncSettings()"></div>
-            <div class="field"><span class="lbl">Тип:</span>
+            <div class="field"><span class="lbl" data-i18n="animName">Имя:</span><input type="text" id="fName" value="BombardFire" onchange="syncSettings()"></div>
+            <div class="field"><span class="lbl" data-i18n="animCode">Код:</span><input type="text" id="fCode" value="bombardfire" onchange="syncSettings()"></div>
+            <div class="field"><span class="lbl" data-i18n="animFrames">Кадров:</span><input type="number" id="fFrames" value="10" min="1" max="300" onchange="syncSettings()"></div>
+            <div class="field"><span class="lbl" data-i18n="animType">Тип:</span>
                 <select id="fType" onchange="syncSettings()">
                     <option value="0">0</option>
                     <option value="1">1</option>
                 </select>
             </div>
-            <div class="field"><span class="lbl">При остановке:</span>
+            <div class="field"><span class="lbl" data-i18n="animActStop">При остановке:</span>
                 <select id="fActStop" onchange="syncSettings()">
                     <option value="PlayTillEnd">PlayTillEnd</option>
                     <option value="Rewind">Rewind</option>
@@ -487,7 +496,7 @@ window._splashDone=function(){
                     <option value="EaseOut" selected>EaseOut</option>
                 </select>
             </div>
-            <div class="field"><span class="lbl">Конец:</span>
+            <div class="field"><span class="lbl" data-i18n="animEnd">Конец:</span>
                 <select id="fEnd" onchange="syncSettings()">
                     <option value="Repeat">Repeat</option>
                     <option value="Hold">Hold</option>
@@ -495,29 +504,29 @@ window._splashDone=function(){
                     <option value="EaseOut" selected>EaseOut</option>
                 </select>
             </div>
-            <h3>Кость</h3>
-            <div id="boneName">— не выбрана —</div>
+            <h3 data-i18n="bone">Кость</h3>
+            <div id="boneName" data-i18n="noSelBone">— не выбрана —</div>
             <div id="boneVsName"></div>
             <div id="rotControls">
-                <h3 style="font-size:11px;color:var(--accent);margin:4px 0;text-transform:uppercase;letter-spacing:.5px">Поворот</h3>
+                <h3 style="font-size:11px;color:var(--accent);margin:4px 0;text-transform:uppercase;letter-spacing:.5px" data-i18n="propRot">Поворот</h3>
                 <div style="display:flex;gap:4px">
                     <div class="val-group"><span class="plbl" style="color:var(--red)">X</span><button onclick="nudgeInput('nX',0.5)">▲</button><input type="number" id="nX" value="0" step="0.5" onchange="onNum('X')"><button onclick="nudgeInput('nX',-0.5)">▼</button></div>
                     <div class="val-group"><span class="plbl" style="color:var(--green)">Y</span><button onclick="nudgeInput('nY',0.5)">▲</button><input type="number" id="nY" value="0" step="0.5" onchange="onNum('Y')"><button onclick="nudgeInput('nY',-0.5)">▼</button></div>
                     <div class="val-group"><span class="plbl" style="color:var(--blue)">Z</span><button onclick="nudgeInput('nZ',0.5)">▲</button><input type="number" id="nZ" value="0" step="0.5" onchange="onNum('Z')"><button onclick="nudgeInput('nZ',-0.5)">▼</button></div>
                 </div>
-                <h3 style="font-size:11px;color:var(--accent);margin:8px 0 4px;text-transform:uppercase;letter-spacing:.5px">Смещение</h3>
+                <h3 style="font-size:11px;color:var(--accent);margin:8px 0 4px;text-transform:uppercase;letter-spacing:.5px" data-i18n="propOffset">Смещение</h3>
                 <div style="display:flex;gap:4px">
                     <div class="val-group"><span class="plbl" style="color:var(--red)">X</span><button onclick="nudgeInput('oNX',0.25)">▲</button><input type="number" id="oNX" value="0" step="0.25" onchange="onOffNum('X')"><button onclick="nudgeInput('oNX',-0.25)">▼</button></div>
                     <div class="val-group"><span class="plbl" style="color:var(--green)">Y</span><button onclick="nudgeInput('oNY',0.25)">▲</button><input type="number" id="oNY" value="0" step="0.25" onchange="onOffNum('Y')"><button onclick="nudgeInput('oNY',-0.25)">▼</button></div>
                     <div class="val-group"><span class="plbl" style="color:var(--blue)">Z</span><button onclick="nudgeInput('oNZ',0.25)">▲</button><input type="number" id="oNZ" value="0" step="0.25" onchange="onOffNum('Z')"><button onclick="nudgeInput('oNZ',-0.25)">▼</button></div>
                 </div>
-                <button class="btn-sm" onclick="resetRot()">Сбросить</button>
+                <button class="btn-sm" onclick="resetRot()" data-i18n="reset">Сбросить</button>
             </div>
         </div>
         <div id="rp-presets">
             <div id="rp-presets-head" onclick="togglePresets()">
                 <span class="arr" id="presetsArr">▶</span>
-                <span class="pt">Шаблоны</span>
+                <span class="pt" data-i18n="presets">Шаблоны</span>
                 <span class="cur" id="presetCur">—</span>
             </div>
             <div id="rp-presets-body">
@@ -526,6 +535,7 @@ window._splashDone=function(){
                 </div>
                 <div id="presetList"></div>
             </div>
+        </div>
         </div>
     </div>
 </div>
@@ -540,10 +550,10 @@ window._splashDone=function(){
             <button onclick="setFrame(Math.min(anim.frames,curFrame+1))" title="След. кадр">⏩</button>
             <button onclick="setFrame(anim.frames)" title="В конец">⏭</button>
         </div>
-        <button onclick="addKF()">＋ Кейфрейм</button>
-        <button onclick="removeKF()">－ Удалить</button>
-        <button onclick="copyKF()">Копировать</button>
-        <button onclick="pasteKF()">Вставить</button>
+        <button onclick="addKF()" data-i18n="kfAdd">＋ Кейфрейм</button>
+        <button onclick="removeKF()" data-i18n="kfRemove">－ Удалить</button>
+        <button onclick="copyKF()" data-i18n="kfCopy">Копировать</button>
+        <button onclick="pasteKF()" data-i18n="kfPaste">Вставить</button>
         <span class="sep" style="display:inline-block;width:1px;height:18px;background:var(--border);margin:0 4px"></span>
         <select id="tlActStop" onchange="syncActStop()" title="On Activity stopped" style="font-size:11px;padding:1px 2px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:3px">
             <option value="PlayTillEnd">PlayTillEnd</option><option value="Rewind">Rewind</option><option value="Stop">Stop</option><option value="EaseOut" selected>EaseOut</option>
@@ -567,18 +577,18 @@ window._splashDone=function(){
         <div class="ntd-opts">
             <div class="ntd-opt" onclick="createNewTab('object')">
                 <div class="ico">&#9744;</div>
-                <div class="nm">Новый объект</div>
-                <div class="desc">Пустая модель для<br>создания с нуля</div>
+                <div class="nm" data-i18n="dlgNewObj">Новый объект</div>
+                <div class="desc" data-i18n-html="dlgNewObjDesc">Пустая модель для<br>создания с нуля</div>
             </div>
             <div class="ntd-opt" onclick="createNewTab('seraph')">
                 <div class="ico">&#9786;</div>
-                <div class="nm">Серафим</div>
-                <div class="desc">Скелет персонажа<br>для анимации</div>
+                <div class="nm" data-i18n="dlgSeraph">Серафим</div>
+                <div class="desc" data-i18n-html="dlgSeraphDesc">Скелет персонажа<br>для анимации</div>
             </div>
             <div class="ntd-opt" onclick="importFromDialog()">
                 <div class="ico">&#9776;</div>
-                <div class="nm">Импорт файла</div>
-                <div class="desc">Загрузить .json<br>модель или анимацию</div>
+                <div class="nm" data-i18n="dlgImport">Импорт файла</div>
+                <div class="desc" data-i18n-html="dlgImportDesc">Загрузить .json<br>модель или анимацию</div>
             </div>
         </div>
     </div>
@@ -690,7 +700,7 @@ function computeBBox(){
     let mn=[Infinity,Infinity,Infinity],mx=[-Infinity,-Infinity,-Infinity];
     let any=false;
     for(const b of BONES){
-        if(b.norender)continue;
+        if(b.norender||b.hidden)continue;
         const d=fk[b.id]; if(!d)continue;
         const vl=boxVerts(b.from,b.to);
         for(const v of vl){
@@ -739,7 +749,7 @@ function createDocument(name, modelType){
         shapeMeta = data.meta;
     }
     const bm = {}; bones.forEach(b=>bm[b.id]=b);
-    const docName = name || (modelType==='object' ? 'Объект' : 'Серафим');
+    const docName = name || (modelType==='object' ? t('tabObject') : t('tabSeraph'));
     return {
         id: nextDocId++, name: docName, dirty: false, modelType: modelType||'seraph',
         editorMode: modelType==='object'?'model':'anim',
@@ -750,7 +760,7 @@ function createDocument(name, modelType){
         rotTracks:{}, offTracks:{},
         camAz:0.35, camEl:0.25, camZoom: modelType==='object' ? 28 : 14, camPanX:0, camPanY:0,
         camCenterX: modelType==='object' ? 8 : 0,
-        camCenterY: modelType==='seraph' ? 18 : 8,
+        camCenterY: 8,
         camCenterZ: modelType==='object' ? 8 : 0,
         activePresetIdx:-1,
         texImg:null, texData:null, texW:0, texH:0, texPath:null,
@@ -835,6 +845,8 @@ function newTab(name, modelType){
                 b.hidden=true;b._userHidden=true;
             }
         }
+        autoCenterCamera();
+        doc.camCenterX=camCenterX; doc.camCenterY=camCenterY; doc.camCenterZ=camCenterZ; doc.camZoom=camZoom;
     }
     buildBoneTracks(); loadSettings(); selectBone(null); buildBoneList();
     renderTimeline(); renderTabBar(); renderPresets(); renderAnimList(); resizeCanvas();
@@ -849,7 +861,7 @@ function newTab(name, modelType){
     }
 }
 // New tab dialog
-function showNewTabDialog(){document.getElementById('ntdTitle').textContent=docs.length?'Новая вкладка':'VS Animator';document.getElementById('newTabDialog').classList.add('open');}
+function showNewTabDialog(){document.getElementById('ntdTitle').textContent=docs.length?t('dlgNewTab'):'VS Animator';document.getElementById('newTabDialog').classList.add('open');}
 function closeNewTabDialog(){if(docs.length===0)return;document.getElementById('newTabDialog').classList.remove('open');}
 async function importFromDialog(){document.getElementById('newTabDialog').classList.remove('open');await loadProject();if(docs.length===0)showNewTabDialog();}
 function createNewTab(type){document.getElementById('newTabDialog').classList.remove('open');setTimeout(()=>{try{newTab(null,type);}catch(e){alert('Ошибка создания: '+e.message);}},100);}
@@ -1143,6 +1155,19 @@ function resizeCanvas(){
     sR.addEventListener('mousedown',e=>{e.preventDefault();dragging=true;startX=e.clientX;startW=rp.offsetWidth;sR.classList.add('active');document.body.style.cursor='col-resize';document.body.style.userSelect='none';});
     document.addEventListener('mousemove',e=>{if(!dragging)return;const nw=Math.max(200,Math.min(450,startW-(e.clientX-startX)));rp.style.width=nw+'px';resizeCanvas();if(editorMode==='tex'){renderFacePreviews();}});
     function stopDrag(){if(!dragging)return;sR.classList.remove('active');document.body.style.cursor='';document.body.style.userSelect='';dragging=false;}
+    document.addEventListener('mouseup',stopDrag);
+    window.addEventListener('blur',stopDrag);
+})();
+
+// ---------- HORIZONTAL SPLITTER (elements/bottom) ----------
+(function(){
+    const topSec=document.getElementById('rp-top-section');
+    const sH=document.getElementById('hsplitterR');
+    const rp=document.getElementById('rpanel');
+    let dragging=false,startY=0,startH=0;
+    sH.addEventListener('mousedown',e=>{e.preventDefault();dragging=true;startY=e.clientY;startH=topSec.offsetHeight;sH.classList.add('active');document.body.style.cursor='row-resize';document.body.style.userSelect='none';});
+    document.addEventListener('mousemove',e=>{if(!dragging)return;const rpH=rp.offsetHeight;const nh=Math.max(80,Math.min(rpH-100,startH+(e.clientY-startY)));topSec.style.height=nh+'px';});
+    function stopDrag(){if(!dragging)return;sH.classList.remove('active');document.body.style.cursor='';document.body.style.userSelect='';dragging=false;}
     document.addEventListener('mouseup',stopDrag);
     window.addEventListener('blur',stopDrag);
 })();
@@ -1935,7 +1960,7 @@ function selectBone(id){
     if(selBones.size>0&&!selBones.has(id)){selBones.clear();}
     if(id&&selBones.size===0)selBones.add(id);
     const nameEl=document.getElementById('boneName'),vsEl=document.getElementById('boneVsName'),rotEl=document.getElementById('rotControls');
-    if(!id){nameEl.textContent='— не выбрана —';vsEl.textContent='';rotEl.style.display='none';}
+    if(!id){nameEl.textContent=t('noSelBone');vsEl.textContent='';rotEl.style.display='none';}
     else{const b=BM[id];nameEl.textContent=b.vs||id+(selBones.size>1?' (+' +(selBones.size-1)+')':'');vsEl.textContent='id: '+id;rotEl.style.display='block';updateSliders();}
     if(editorMode==='model') fillElemProps();
     if(editorMode==='tex'){fillUvEditor();renderFacePreviews();}
@@ -2380,17 +2405,47 @@ document.addEventListener('mouseover',e=>{
 let curLang='ru';
 const I18N={
     ru:{
-        menuFile:'Файл',menuView:'Вид',menuSettings:'Настройки',
+        menuFile:'Файл',menuEdit:'Правка',menuView:'Вид',menuSettings:'Настройки',
         mNew:'Новый',mImport:'Импорт',mSave:'Сохранить',mSaveAs:'Сохранить как...',mExport:'Экспорт VS',
+        mUndo:'Отменить',mRedo:'Повторить',
         mResetCam:'Сброс камеры',mLang:'Язык',mTheme:'Тема',
-        model:'Модель',anim:'Анимация',elements:'Элементы',
+        model:'Модель',anim:'Анимация',textures:'Текстуры',elements:'Элементы',
+        element:'Элемент',noSelection:'— не выбран —',noSelBone:'— не выбрана —',noSelElem:'— элемент не выбран —',
+        propName:'Имя',propFrom:'Начало',propTo:'Конец',propPivot:'Точка вращения',propRot:'Поворот',
+        actAdd:'＋ Элемент',actChild:'＋ Дочерний',actCopy:'Копия',actDelete:'Удалить',
+        animations:'Анимации',
+        texImport:'📁 Импорт',texDelete:'✕ Удалить',texCopy:'📋 Копия',texPaste:'📌 Вставка',
+        texFaceUV:'Face UV',texRotation:'Поворот',texProps:'Свойства',texUVSize:'Размеры UV',texModelTex:'Текстуры модели',texAdd:'+ Добавить текстуру',
+        animName:'Имя:',animCode:'Код:',animFrames:'Кадры:',animEnd:'Конец:',animActStop:'Остановка:',animType:'Тип:',
+        bone:'Кость',propOffset:'Смещение',reset:'Сбросить',presets:'Шаблоны',
+        kfAdd:'＋ Кейфрейм',kfRemove:'－ Удалить',kfCopy:'Копировать',kfPaste:'Вставить',
+        animActStop:'При остановке:',
+        newAnim:'Новая анимация',saveJson:'Сохранить JSON',
+        dlgNewTab:'Новая вкладка',dlgNewObj:'Новый объект',dlgSeraph:'Серафим',dlgImport:'Импорт файла',
+        dlgNewObjDesc:'Пустая модель для<br>создания с нуля',dlgSeraphDesc:'Скелет персонажа<br>для анимации',dlgImportDesc:'Загрузить .json<br>модель или анимацию',
+        tabObject:'Объект',tabSeraph:'Серафим',
         themeBlue:'🔵 Синяя',themeDark:'⚫ Тёмная',themeLight:'⚪ Светлая'
     },
     en:{
-        menuFile:'File',menuView:'View',menuSettings:'Settings',
+        menuFile:'File',menuEdit:'Edit',menuView:'View',menuSettings:'Settings',
         mNew:'New',mImport:'Import',mSave:'Save',mSaveAs:'Save As...',mExport:'Export VS',
+        mUndo:'Undo',mRedo:'Redo',
         mResetCam:'Reset camera',mLang:'Language',mTheme:'Theme',
-        model:'Model',anim:'Animation',elements:'Elements',
+        model:'Model',anim:'Animation',textures:'Textures',elements:'Elements',
+        element:'Element',noSelection:'— none —',noSelBone:'— none —',noSelElem:'— no element —',
+        propName:'Name',propFrom:'From',propTo:'To',propPivot:'Pivot (Origin)',propRot:'Rotation',
+        actAdd:'＋ Element',actChild:'＋ Child',actCopy:'Copy',actDelete:'Delete',
+        animations:'Animations',
+        texImport:'📁 Import',texDelete:'✕ Delete',texCopy:'📋 Copy',texPaste:'📌 Paste',
+        texFaceUV:'Face UV',texRotation:'Rotation',texProps:'Properties',texUVSize:'UV Size',texModelTex:'Model Textures',texAdd:'+ Add texture',
+        animName:'Name:',animCode:'Code:',animFrames:'Frames:',animEnd:'End:',animActStop:'Stop:',animType:'Type:',
+        bone:'Bone',propOffset:'Offset',reset:'Reset',presets:'Presets',
+        kfAdd:'＋ Keyframe',kfRemove:'－ Remove',kfCopy:'Copy',kfPaste:'Paste',
+        animActStop:'On stop:',
+        newAnim:'New Animation',saveJson:'Save JSON',
+        dlgNewTab:'New Tab',dlgNewObj:'New Object',dlgSeraph:'Seraph',dlgImport:'Import File',
+        dlgNewObjDesc:'Empty model<br>from scratch',dlgSeraphDesc:'Character skeleton<br>for animation',dlgImportDesc:'Load .json<br>model or animation',
+        tabObject:'Object',tabSeraph:'Seraph',
         themeBlue:'🔵 Blue',themeDark:'⚫ Dark',themeLight:'⚪ Light'
     }
 };
@@ -2398,14 +2453,16 @@ function setLang(lang){
     curLang=lang;
     const L=I18N[lang];
     document.querySelectorAll('[data-i18n]').forEach(el=>{const k=el.getAttribute('data-i18n');if(L[k]!==undefined)el.textContent=L[k];});
+    document.querySelectorAll('[data-i18n-html]').forEach(el=>{const k=el.getAttribute('data-i18n-html');if(L[k]!==undefined)el.innerHTML=L[k];});
     document.querySelectorAll('[data-i18n-opt]').forEach(el=>{const k=el.getAttribute('data-i18n-opt');if(L[k]!==undefined)el.textContent=L[k];});
     // Panel labels
     const mTabs=document.querySelectorAll('.mode-tabs button');
     if(mTabs[0])mTabs[0].textContent=L.model;
     if(mTabs[1])mTabs[1].textContent=L.anim;
+    if(mTabs[2])mTabs[2].textContent=L.textures;
     const elH3=document.querySelector('#rp-elements h3');
     if(elH3)elH3.textContent=L.elements;
-    try{localStorage.setItem('vs-anim-lang',lang);}catch(e){}
+    savePrefs();
 }
 function t(key){return I18N[curLang][key]||key;}
 
@@ -2429,15 +2486,20 @@ function setTheme(theme){
     CV=CV_THEMES[theme]||CV_THEMES.blue;
     if(theme==='blue'){document.documentElement.removeAttribute('data-theme');}
     else{document.documentElement.setAttribute('data-theme',theme);}
-    try{localStorage.setItem('vs-anim-theme',theme);}catch(e){}
+    savePrefs();
     render();
 }
-function loadPrefs(){
+function savePrefs(){
+    try{fetch('/api/prefs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({lang:curLang,theme:curTheme})});}catch(e){}
+}
+async function loadPrefs(){
     try{
-        const t=localStorage.getItem('vs-anim-theme');
-        if(t){curTheme=t;CV=CV_THEMES[t]||CV_THEMES.blue;if(t!=='blue')document.documentElement.setAttribute('data-theme',t);const sel=document.getElementById('theme-select');if(sel)sel.value=t;}
-        const l=localStorage.getItem('vs-anim-lang');
-        if(l){curLang=l;const sel=document.getElementById('lang-select');if(sel)sel.value=l;setLang(l);}
+        // Try server prefs first (works in EXE), fallback to localStorage
+        let p=null;
+        try{const r=await fetch('/api/prefs');p=await r.json();}catch(e){}
+        if(!p||!p.lang){try{p={theme:localStorage.getItem('vs-anim-theme'),lang:localStorage.getItem('vs-anim-lang')};}catch(e){}}
+        if(p&&p.theme){const t=p.theme;curTheme=t;CV=CV_THEMES[t]||CV_THEMES.blue;if(t!=='blue')document.documentElement.setAttribute('data-theme',t);const sel=document.getElementById('theme-select');if(sel)sel.value=t;}
+        if(p&&p.lang){curLang=p.lang;const sel=document.getElementById('lang-select');if(sel)sel.value=p.lang;setLang(p.lang);}
     }catch(e){}
 }
 
@@ -3053,7 +3115,7 @@ function fillUvEditor(){
     const propsEl=document.getElementById('uvProps');
     if(!nameEl)return;
     if(!selBone||!BM[selBone]){
-        nameEl.textContent='— элемент не выбран —';
+        nameEl.textContent=t('noSelElem');
         if(faceInputs)faceInputs.innerHTML='';
         if(texInfo)texInfo.innerHTML='';
         if(propsEl)propsEl.innerHTML='';
@@ -3350,8 +3412,8 @@ function pasteFaceTex(e){
 }
 
 // ---------- INIT ----------
-function init(){
-    loadPrefs();
+async function init(){
+    await loadPrefs();
     resizeCanvas();
     renderTabBar();
     initFaceCanvasEvents();

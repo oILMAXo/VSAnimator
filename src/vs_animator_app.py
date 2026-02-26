@@ -131,6 +131,31 @@ def api_write():
     return json.dumps(None)
 
 
+PREFS_FILE = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), 'vs-animator-prefs.json')
+
+@app.get('/api/prefs')
+def api_prefs_load():
+    response.content_type = 'application/json; charset=utf-8'
+    try:
+        if os.path.exists(PREFS_FILE):
+            with open(PREFS_FILE, 'r', encoding='utf-8') as f:
+                return f.read()
+    except:
+        pass
+    return '{}'
+
+@app.post('/api/prefs')
+def api_prefs_save():
+    response.content_type = 'application/json; charset=utf-8'
+    try:
+        data = request.body.read().decode('utf-8')
+        with open(PREFS_FILE, 'w', encoding='utf-8') as f:
+            f.write(data)
+        return json.dumps('ok')
+    except Exception as e:
+        return json.dumps({'error': str(e)})
+
+
 @app.post('/api/read-image')
 def api_read_image():
     """Read an image file and return base64 data URI."""
