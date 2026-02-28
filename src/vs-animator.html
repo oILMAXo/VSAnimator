@@ -148,7 +148,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(-
 /* Center — canvas */
 #canvas-wrap{flex:1;position:relative;background:var(--cv-bg,#0a0a18);overflow:hidden}
 canvas{display:block;width:100%;height:100%}
-#cam-info{position:absolute;bottom:8px;left:10px;font-size:10px;color:#444;pointer-events:none}
+#cam-info{position:absolute;bottom:8px;left:10px;font-size:10px;color:var(--dim);pointer-events:none}
 
 /* Right panel — settings, rotation & presets */
 #rpanel{width:280px;background:var(--panel);border-left:1px solid var(--border);flex-shrink:0;display:flex;flex-direction:column;overflow:hidden}
@@ -189,24 +189,28 @@ canvas{display:block;width:100%;height:100%}
 .btn-sm:hover{background:var(--bg2);color:var(--text)}
 
 /* Timeline */
-#timeline{background:var(--bg2);border-top:1px solid var(--border);padding:8px 12px;flex-shrink:0}
-#tl-head{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+#timeline{background:var(--bg2);border-top:1px solid var(--border);padding:8px 12px;flex-shrink:0;position:relative}
+#tl-resize{position:absolute;top:-3px;left:0;right:0;height:6px;cursor:ns-resize;z-index:10}
+#tl-resize:hover,#tl-resize:active{background:rgba(233,168,38,.3)}
+#tl-head{display:flex;align-items:center;gap:8px;margin-bottom:5px;flex-wrap:wrap}
 #tl-head button{padding:3px 10px;background:var(--panel);border:1px solid var(--border);border-radius:3px;color:var(--text);cursor:pointer;font-size:11px}
 #tl-head button:hover{background:#2a2a4a}
 #tl-head .info{margin-left:auto;color:var(--dim);font-size:12px}
-#track{position:relative;height:50px;background:var(--cv-bg,#0a0a18);border-radius:4px;border:1px solid var(--border);cursor:pointer;overflow:hidden}
-#track-nums{position:absolute;top:0;left:0;right:0;height:13px;pointer-events:none}
-#track-bar-global{position:absolute;top:13px;left:0;right:0;height:16px;border-bottom:1px solid rgba(255,255,255,.05)}
-#track-bar-bone{position:absolute;top:30px;left:0;right:0;height:18px}
-.kf-mk-global{position:absolute;top:50%;width:7px;height:7px;background:var(--dim);transform:translate(-50%,-50%) rotate(45deg);cursor:pointer;border:1px solid rgba(255,255,255,.1);z-index:2;opacity:.5}
-.kf-mk-global.act{background:var(--accent);opacity:.7}
-.kf-mk-bone{position:absolute;top:50%;width:10px;height:10px;background:var(--green);transform:translate(-50%,-50%) rotate(45deg);cursor:pointer;border:1px solid rgba(255,255,255,.2);z-index:2}
-.kf-mk-bone.act{background:var(--accent);width:12px;height:12px}
+#track{position:relative;display:flex;flex-direction:column;min-height:50px;background:var(--cv-bg,#0a0a18);border-radius:4px;border:1px solid var(--border);cursor:pointer;overflow:hidden}
+#track-nums{position:relative;height:13px;flex-shrink:0;pointer-events:none;margin-left:60px}
+#track-rows{flex:1;overflow-y:auto;overflow-x:hidden;min-height:20px}
+.bone-row{display:flex;height:18px;border-bottom:1px solid rgba(255,255,255,.04);position:relative}
+.bone-row.sel{background:rgba(46,204,113,.08)}
+.bone-row:hover{background:rgba(255,255,255,.03)}
+.bone-row-label{width:60px;flex-shrink:0;font-size:9px;color:var(--dim);padding:0 4px;line-height:18px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:default;user-select:none;border-right:1px solid rgba(255,255,255,.05)}
+.bone-row.sel .bone-row-label{color:var(--green);font-weight:bold}
+.bone-row-track{flex:1;position:relative;height:18px}
+.kf-mk-bone{position:absolute;top:50%;width:8px;height:8px;background:var(--green);transform:translate(-50%,-50%) rotate(45deg);cursor:pointer;border:1px solid rgba(255,255,255,.2);z-index:2}
+.kf-mk-bone.act{background:var(--accent);width:10px;height:10px}
 .kf-mk-bone.has-rot{background:var(--green)}
 .kf-mk-bone.has-off{background:var(--blue)}
 .kf-mk-bone.has-both{background:var(--accent)}
 .kf-mk-bone.selected{outline:2px solid #fff;outline-offset:1px;filter:brightness(1.4)}
-.kf-mk-global.selected{outline:2px solid #fff;outline-offset:1px;opacity:.9;filter:brightness(1.3)}
 #track-sel-rect{position:absolute;top:0;bottom:0;background:rgba(233,168,38,.15);border:1px solid rgba(233,168,38,.5);pointer-events:none;z-index:4;display:none}
 #playhead{position:absolute;top:0;bottom:0;width:2px;background:var(--red);pointer-events:none;z-index:5}
 ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
@@ -557,6 +561,7 @@ window._splashDone=function(){
 </div>
 
 <div id="timeline">
+    <div id="tl-resize"></div>
     <div id="tl-head">
         <div id="tl-controls">
             <button onclick="setFrame(0)" title="В начало">⏮</button>
@@ -570,8 +575,10 @@ window._splashDone=function(){
         <button onclick="removeKF(false)" title="Del — удалить ключ кости / Shift+Del — все">－ Удалить</button>
         <button onclick="prevBoneKF()" title="[ — пред. ключ кости">◀</button>
         <button onclick="nextBoneKF()" title="] — след. ключ кости">▶</button>
-        <button onclick="copyKF()" data-i18n="kfCopy">Копировать</button>
-        <button onclick="pasteKF()" data-i18n="kfPaste">Вставить</button>
+        <button onclick="copyBoneKF()" title="Копировать ключ кости">📋 Кость</button>
+        <button onclick="pasteBoneKF()" title="Вставить ключ кости">📌 Кость</button>
+        <button onclick="copyKF()" data-i18n="kfCopy">Копировать Всё</button>
+        <button onclick="pasteKF()" data-i18n="kfPaste">Вставить Всё</button>
         <span class="sep" style="display:inline-block;width:1px;height:18px;background:var(--border);margin:0 4px"></span>
         <select id="tlActStop" onchange="syncActStop()" title="On Activity stopped" style="font-size:11px;padding:1px 2px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:3px">
             <option value="PlayTillEnd">PlayTillEnd</option><option value="Rewind">Rewind</option><option value="Stop">Stop</option><option value="EaseOut" selected>EaseOut</option>
@@ -584,8 +591,7 @@ window._splashDone=function(){
     </div>
     <div id="track" onmousedown="onTrackDown(event)">
         <div id="track-nums"></div>
-        <div id="track-bar-global"></div>
-        <div id="track-bar-bone"></div>
+        <div id="track-rows"></div>
         <div id="track-sel-rect"></div>
         <div id="playhead"></div>
     </div>
@@ -631,6 +637,8 @@ window.onerror=function(msg,src,line,col,err){alert('JS Error: '+msg+'\nLine: '+
 //  VS ANIMATOR — 3D Seraph Animation Editor
 // ================================================================
 const D2R = Math.PI / 180, R2D = 180 / Math.PI, PI = Math.PI;
+const TL_LBL_W=60; // timeline bone-label width (px)
+const TL_TPAD=1.5;  // timeline track padding (%)
 function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
 
 // ---------- EMBEDDED SERAPH MODEL DATA ----------
@@ -778,7 +786,7 @@ function createDocument(name, modelType){
         activeAnimIdx: 0,
         curFrame:0, selBone:null, clipboard:null, loopPlayback:false,
         rotTracks:{}, offTracks:{},
-        camAz:0.35, camEl:0.25, camZoom: modelType==='object' ? 28 : 14, camPanX:0, camPanY:0,
+        camAz: (modelType==='object' ? 0.35 : PI/2+0.35), camEl:0.25, camZoom: modelType==='object' ? 28 : 14, camPanX:0, camPanY:0,
         camCenterX: modelType==='object' ? 8 : 0,
         camCenterY: 8,
         camCenterZ: modelType==='object' ? 8 : 0,
@@ -1008,7 +1016,8 @@ function toggleTextures(){
 
 // ---------- MATH ----------
 function rotMat(rx,ry,rz){
-    // XYZ per-axis order (Rx*Ry*Rz) — matches VS game engine
+    // XYZ per-axis order (Rx*Ry*Rz) — matches VS game engine (Y axis inverted)
+    ry=-ry;
     const cx=Math.cos(rx*D2R),sx=Math.sin(rx*D2R),cy=Math.cos(ry*D2R),sy=Math.sin(ry*D2R),cz=Math.cos(rz*D2R),sz=Math.sin(rz*D2R);
     return [cy*cz,-cy*sz,sy, cx*sz+sx*sy*cz,cx*cz-sx*sy*sz,-sx*cy, sx*sz-cx*sy*cz,sx*cz+cx*sy*sz,cx*cy];
 }
@@ -1016,16 +1025,16 @@ function mv3(m,v){return [m[0]*v[0]+m[1]*v[1]+m[2]*v[2], m[3]*v[0]+m[4]*v[1]+m[5
 function mm3(a,b){const r=[];for(let i=0;i<3;i++)for(let j=0;j<3;j++)r[i*3+j]=a[i*3]*b[j]+a[i*3+1]*b[3+j]+a[i*3+2]*b[6+j];return r;}
 function matTranspose3(m){return [m[0],m[3],m[6], m[1],m[4],m[7], m[2],m[5],m[8]];}
 function matToEuler(m){
-    // Extract XYZ Euler from rotation matrix matching rotMat() convention:
+    // Extract XYZ Euler from rotation matrix matching rotMat() convention (Y axis inverted):
     // m[2]=sin(ry), m[5]=-sin(rx)*cos(ry), m[8]=cos(rx)*cos(ry), m[0]=cos(ry)*cos(rz), m[1]=-cos(ry)*sin(rz)
     const sy=m[2];
     if(Math.abs(sy)>=0.9999){
         // Gimbal lock: ry≈±90°
-        const ry=Math.sign(sy)*90;
+        const ry=-Math.sign(sy)*90;
         const rx=Math.atan2(m[3],m[4])*R2D;
         return [rx,ry,0];
     }
-    const ry=Math.asin(clamp(sy,-1,1))*R2D;
+    const ry=-Math.asin(clamp(sy,-1,1))*R2D;
     const rx=Math.atan2(-m[5],m[8])*R2D;
     const rz=Math.atan2(-m[1],m[0])*R2D;
     return [rx,ry,rz];
@@ -1352,7 +1361,8 @@ function render(){
         const b=BONES[_bi];
         if(b.norender||b.hidden||b._soloHide)continue;
         _curBoneIdx=_bi;
-        const d=fk[b.id], vl=b._vl||boxVerts(b.from,b.to);
+        const d=fk[b.id]; if(!d)continue;
+        const vl=b._vl||boxVerts(b.from,b.to);
         const wr=d.wr, wpx=d.wp[0], wpy=d.wp[1], wpz=d.wp[2];
         const brox=b.ro[0], broy=b.ro[1], broz=b.ro[2];
         const sv=new Array(8);
@@ -1666,14 +1676,6 @@ function hitTestGizmo(mx,my){
 }
 
 // ---------- CANVAS INTERACTION ----------
-function pointInPoly(px,py,pts){
-    let inside=false;
-    for(let i=0,j=pts.length-1;i<pts.length;j=i++){
-        const xi=pts[i][0],yi=pts[i][1],xj=pts[j][0],yj=pts[j][1];
-        if((yi>py)!==(yj>py)&&px<(xj-xi)*(py-yi)/(yj-yi)+xi)inside=!inside;
-    }
-    return inside;
-}
 function findBoneAtScreen(sx,sy){
     // Pixel-perfect hit-test via ID buffer (written during z-buffer render)
     const ix=Math.round(sx),iy=Math.round(sy);
@@ -2024,7 +2026,9 @@ cv.addEventListener('wheel',e=>{
     render();
 },{passive:false});
 
-function resetCam(){camAz=0.35;camEl=0.25;camPanX=0;camPanY=0;autoCenterCamera();render();}
+function _isEntityModel(){const d=docs[activeDocIdx];return d&&(d.modelType==='seraph'||d.modelType==='entity');}
+function _frontAz(){return _isEntityModel()?PI/2:0;}
+function resetCam(){camAz=_frontAz()+0.35;camEl=0.25;camPanX=0;camPanY=0;autoCenterCamera();render();}
 
 // ---------- BONE SELECTION ----------
 function selectBone(id){
@@ -2056,6 +2060,8 @@ function updateSliders(){
     if(btnG){btnG.classList.toggle('active',rotMode==='global');}
 }
 function setRotMode(mode){rotMode=mode;updateSliders();}
+// Common refresh after any keyframe/animation edit
+function refreshAfterEdit(){buildBoneTracks();renderTimeline();render();updateSliders();updateBoneList();}
 function onNum(axis){
     if(!selBone)return;
     let v=parseFloat(document.getElementById('n'+axis).value)||0;
@@ -2079,7 +2085,7 @@ function setBoneRotGlobal(axis,val){
     if(entry.length<=3&&entry.every(v=>v===0))delete kf.bones[selBone];
     else if(entry.length>=6&&entry.every(v=>v===0))delete kf.bones[selBone];
     cleanupEmptyKF(curFrame);
-    markDirty();buildBoneTracks();updateBoneList();render();updateSliders();
+    markDirty();refreshAfterEdit();
 }
 // Direct keyframe setters for gizmo drag (no pushUndo, no rebuild)
 function _setAnimRot(kf,boneId,rv){
@@ -2112,9 +2118,9 @@ function setBoneRot(axis,val){
     if(entry.length<=3&&entry.every(v=>v===0))delete kf.bones[selBone];
     else if(entry.length>=6&&entry[0]===0&&entry[1]===0&&entry[2]===0&&entry[3]===0&&entry[4]===0&&entry[5]===0)delete kf.bones[selBone];
     cleanupEmptyKF(curFrame);
-    markDirty();buildBoneTracks();updateBoneList();render();
+    markDirty();refreshAfterEdit();
 }
-function resetRot(){if(!selBone)return;pushUndo(true);const kf=anim.keyframes.find(k=>k.frame===curFrame);if(kf&&kf.bones[selBone])delete kf.bones[selBone];cleanupEmptyKF(curFrame);markDirty();buildBoneTracks();updateSliders();updateBoneList();render();}
+function resetRot(){if(!selBone)return;pushUndo(true);const kf=anim.keyframes.find(k=>k.frame===curFrame);if(kf&&kf.bones[selBone])delete kf.bones[selBone];cleanupEmptyKF(curFrame);markDirty();refreshAfterEdit();}
 
 // ---------- OFFSET CONTROLS ----------
 function onOffNum(axis){if(!selBone)return;let v=parseFloat(document.getElementById('oN'+axis).value)||0;v=clamp(v,-20,20);document.getElementById('oN'+axis).value=v;setBoneOff(axis,v);}
@@ -2135,7 +2141,7 @@ function setBoneOff(axis,val){
         if(allZero)delete kf.bones[selBone];
     }
     cleanupEmptyKF(curFrame);
-    markDirty();buildBoneTracks();updateBoneList();render();
+    markDirty();refreshAfterEdit();
 }
 
 // ---------- EDITOR MODE (model / anim) ----------
@@ -2152,7 +2158,7 @@ function setEditorMode(mode){
     document.getElementById('rp-tex').style.display=mode==='tex'?'':'none';
     document.getElementById('uv-left').style.display=mode==='tex'?'':'none';
     document.getElementById('rp-top').style.display=mode==='anim'?'':'none';
-    const isSeraph=activeDocIdx>=0&&docs[activeDocIdx].modelType==='seraph';
+    const isSeraph=activeDocIdx>=0&&(docs[activeDocIdx].modelType==='seraph'||docs[activeDocIdx].modelType==='entity');
     // presets panel removed, integrated into anim dropdown
     document.getElementById('timeline').style.display=mode==='anim'?'':'none';
     if(mode==='model'){fillElemProps();renderModelAnimList();}
@@ -2439,7 +2445,7 @@ function addKF(allBones){
         else if(r[0]||r[1]||r[2]){kf.bones[selBone]=[r[0],r[1],r[2]];}
         else{if(!kf.bones[selBone])kf.bones[selBone]=[0,0,0];}
     }
-    markDirty();buildBoneTracks();renderTimeline();render();updateSliders();updateBoneList();
+    markDirty();refreshAfterEdit();
 }
 function removeKF(allBones){
     if(!allBones&&selBone){
@@ -2449,11 +2455,11 @@ function removeKF(allBones){
         pushUndo(true);
         delete kf.bones[selBone];
         cleanupEmptyKF(curFrame);
-        markDirty();buildBoneTracks();renderTimeline();render();updateSliders();updateBoneList();
+        markDirty();refreshAfterEdit();
     } else {
         // All bones: remove entire keyframe
         const i=anim.keyframes.findIndex(k=>k.frame===curFrame);
-        if(i>=0){pushUndo(true);anim.keyframes.splice(i,1);if(!anim.keyframes.length)anim.keyframes.push({frame:0,bones:{}});markDirty();buildBoneTracks();renderTimeline();render();updateSliders();updateBoneList();}
+        if(i>=0){pushUndo(true);anim.keyframes.splice(i,1);if(!anim.keyframes.length)anim.keyframes.push({frame:0,bones:{}});markDirty();refreshAfterEdit();}
     }
 }
 function prevBoneKF(){
@@ -2471,7 +2477,7 @@ function nextBoneKF(){
     for(const f of allFrames){if(f>curFrame){setFrame(f);return;}}
 }
 function copyKF(){const kf=anim.keyframes.find(k=>k.frame===curFrame);if(kf)clipboard=JSON.parse(JSON.stringify(kf.bones));}
-function pasteKF(){if(!clipboard)return;pushUndo(true);const kf=getOrCreateKF(curFrame);kf.bones=JSON.parse(JSON.stringify(clipboard));markDirty();buildBoneTracks();render();updateSliders();updateBoneList();renderTimeline();}
+function pasteKF(){if(!clipboard)return;pushUndo(true);const kf=getOrCreateKF(curFrame);kf.bones=JSON.parse(JSON.stringify(clipboard));markDirty();refreshAfterEdit();}
 
 // ---------- KEYFRAME MULTI-SELECTION ----------
 function toggleKFSelection(frame){
@@ -2509,7 +2515,7 @@ function deleteSelectedKFs(allBones){
     }
     if(!anim.keyframes.length)anim.keyframes.push({frame:0,bones:{}});
     selectedKFs.clear();
-    markDirty();buildBoneTracks();renderTimeline();render();updateSliders();updateBoneList();
+    markDirty();refreshAfterEdit();
 }
 function moveSelectedKFs(delta){
     if(selectedKFs.size===0||delta===0)return;
@@ -2528,68 +2534,148 @@ function moveSelectedKFs(delta){
     const newSel=new Set(frames.map(f=>f+delta));
     selectedKFs.clear();
     for(const f of newSel)selectedKFs.add(f);
-    sortKFs();markDirty();buildBoneTracks();renderTimeline();render();updateSliders();updateBoneList();
+    sortKFs();markDirty();refreshAfterEdit();
 }
 
 // ---------- TIMELINE ----------
+let tlHeight=140; // default timeline track height (resizable)
+let boneClipboard=null; // per-bone clipboard: {rot:[rx,ry,rz], off:[ox,oy,oz]} or null
+
 function renderTimeline(){
-    const barG=document.getElementById('track-bar-global'),barB=document.getElementById('track-bar-bone'),nums=document.getElementById('track-nums');
-    barG.innerHTML='';barB.innerHTML='';nums.innerHTML='';
+    const rows=document.getElementById('track-rows'),nums=document.getElementById('track-nums');
+    rows.innerHTML='';nums.innerHTML='';
     const total=anim.frames,step=total<=20?1:total<=50?5:10;
-    for(let f=0;f<=total;f+=step){const pct=(f/total)*100;const s=document.createElement('span');s.style.cssText=`position:absolute;left:${pct}%;font-size:9px;color:#444;transform:translateX(-50%)`;s.textContent=f;nums.appendChild(s);}
-    // Global keyframe markers (all bones, dimmed)
-    for(const kf of anim.keyframes){const pct=(kf.frame/total)*100;const mk=document.createElement('div');mk.className='kf-mk-global'+(kf.frame===curFrame?' act':'')+(selectedKFs.has(kf.frame)?' selected':'');mk.style.left=pct+'%';mk.title='Кадр '+kf.frame+' (все кости)';mk.dataset.frame=kf.frame;mk.addEventListener('mousedown',e=>{if(e.shiftKey){e.stopPropagation();e.preventDefault();toggleKFSelection(kf.frame);return;}e.stopPropagation();clearKFSelection();setFrame(kf.frame);});barG.appendChild(mk);}
-    // Per-bone keyframe markers (selected bone, bright)
-    if(selBone){
+    function framePct(f){return TL_TPAD+(f/total)*(100-2*TL_TPAD);}
+    // Frame numbers (offset by label width)
+    for(let f=0;f<=total;f+=step){const pct=framePct(f);const s=document.createElement('span');s.style.cssText=`position:absolute;left:${pct}%;font-size:9px;color:#444;transform:translateX(-50%)`;s.textContent=f;nums.appendChild(s);}
+    // Collect bones that have keyframe data
+    const activeBones=[];
+    for(const b of BONES){
+        if(b.id==='root'&&b.norender)continue;
+        const rT=rotTracks[b.id]||[];
+        const oT=offTracks[b.id]||[];
+        if(rT.length||oT.length)activeBones.push(b);
+    }
+    // Render per-bone rows
+    for(const b of activeBones){
+        const row=document.createElement('div');
+        row.className='bone-row'+(b.id===selBone?' sel':'');
+        // Label
+        const lbl=document.createElement('div');
+        lbl.className='bone-row-label';
+        lbl.textContent=b.vs||b.id;
+        lbl.title=b.vs||b.id;
+        lbl.addEventListener('mousedown',e=>{e.stopPropagation();selectBone(b.id);renderTimeline();render();updateSliders();updateBoneList();});
+        row.appendChild(lbl);
+        // Track area with keyframe markers
+        const trk=document.createElement('div');
+        trk.className='bone-row-track';
+        const rTrack=rotTracks[b.id]||[];
+        const oTrack=offTracks[b.id]||[];
         const boneFrames=new Set();
-        const rTrack=rotTracks[selBone]||[];
-        const oTrack=offTracks[selBone]||[];
-        rTrack.forEach(kf=>boneFrames.add(kf.frame));
-        oTrack.forEach(kf=>boneFrames.add(kf.frame));
+        rTrack.forEach(k=>boneFrames.add(k.frame));
+        oTrack.forEach(k=>boneFrames.add(k.frame));
         for(const f of boneFrames){
-            const pct=(f/total)*100;
+            const pct=framePct(f);
             const hasR=rTrack.some(k=>k.frame===f);
             const hasO=oTrack.some(k=>k.frame===f);
             const cls=hasR&&hasO?'has-both':hasO?'has-off':'has-rot';
             const mk=document.createElement('div');
             mk.className='kf-mk-bone '+cls+(f===curFrame?' act':'')+(selectedKFs.has(f)?' selected':'');
             mk.style.left=pct+'%';
-            mk.title=(BM[selBone]?.vs||selBone)+' — кадр '+f+(hasR?' [rot]':'')+(hasO?' [off]':'');
+            mk.title=(b.vs||b.id)+' — кадр '+f+(hasR?' [rot]':'')+(hasO?' [off]':'');
             mk.dataset.frame=f;
-            mk.addEventListener('mousedown',e=>{if(e.shiftKey){e.stopPropagation();e.preventDefault();toggleKFSelection(f);return;}e.stopPropagation();clearKFSelection();setFrame(f);});
-            barB.appendChild(mk);
+            mk.addEventListener('mousedown',e=>{
+                e.stopPropagation();
+                // Click on bone marker: select that bone + go to frame
+                if(b.id!==selBone){selectBone(b.id);updateSliders();updateBoneList();}
+                if(e.shiftKey){e.preventDefault();toggleKFSelection(f);return;}
+                clearKFSelection();setFrame(f);
+            });
+            trk.appendChild(mk);
         }
+        row.appendChild(trk);
+        rows.appendChild(row);
     }
-    document.getElementById('playhead').style.left=((curFrame/total)*100)+'%';
-    // Update selection info (must be after playhead update)
+    // If no active bones, show a placeholder
+    if(!activeBones.length){
+        const ph=document.createElement('div');
+        ph.style.cssText='padding:6px;color:var(--dim);font-size:10px;text-align:center';
+        ph.textContent='Нет ключей — нажмите K для добавления';
+        rows.appendChild(ph);
+    }
+    // Playhead & track height
+    const track=document.getElementById('track');
+    track.style.height=tlHeight+'px';
+    // Playhead: pixel position accounting for label width
+    const ph=document.getElementById('playhead');
+    const trkW=track.offsetWidth||300;
+    const availW=trkW-TL_LBL_W,padPx=availW*TL_TPAD/100;
+    const pxLeft=TL_LBL_W+padPx+(curFrame/total)*(availW-2*padPx);
+    ph.style.left=pxLeft+'px';
     updateKFSelectionInfo();
 }
+
+// --- Timeline resize ---
+(function(){
+    const handle=document.getElementById('tl-resize');
+    if(!handle)return;
+    let startY,startH;
+    handle.addEventListener('mousedown',e=>{
+        e.preventDefault();startY=e.clientY;startH=tlHeight;
+        function onM(ev){tlHeight=clamp(startH-(ev.clientY-startY),50,500);document.getElementById('track').style.height=tlHeight+'px';}
+        function onU(){window.removeEventListener('mousemove',onM);window.removeEventListener('mouseup',onU);}
+        window.addEventListener('mousemove',onM);window.addEventListener('mouseup',onU);
+    });
+})();
+
+// --- Per-bone copy/paste ---
+function copyBoneKF(){
+    if(!selBone)return;
+    const rots=getRotsAtFrame(curFrame),r=rots[selBone]||[0,0,0];
+    const offs=getOffsetsAtFrame(curFrame),o=offs[selBone]||[0,0,0];
+    boneClipboard={bone:selBone,rot:[...r],off:[...o]};
+    showNotification('📋 Ключ кости «'+(BM[selBone]?.vs||selBone)+'» скопирован');
+}
+function pasteBoneKF(){
+    if(!boneClipboard||!selBone)return;
+    pushUndo(true);
+    const kf=getOrCreateKF(curFrame);
+    const r=boneClipboard.rot, o=boneClipboard.off;
+    const hasOff=o[0]||o[1]||o[2];
+    if(hasOff) kf.bones[selBone]=[r[0],r[1],r[2],o[0],o[1],o[2]];
+    else kf.bones[selBone]=[r[0],r[1],r[2]];
+    markDirty();refreshAfterEdit();
+    showNotification('📌 Ключ вставлен в «'+(BM[selBone]?.vs||selBone)+'»');
+}
+
 function onTrackDown(e){
     const track=document.getElementById('track'),rect=track.getBoundingClientRect();
+    // Ignore clicks on bone-row-label
+    if(e.target.classList.contains('bone-row-label'))return;
+    const trackLeft=rect.left+TL_LBL_W, trackW=rect.width-TL_LBL_W;
+    const padPx=trackW*TL_TPAD/100;
+    if(e.clientX<trackLeft)return;
+    function pxToFrame(ex){return Math.round(clamp((ex-trackLeft-padPx)/(trackW-2*padPx),0,1)*anim.frames);}
     if(e.shiftKey){
-        // Shift+drag: rectangle selection on timeline
         e.preventDefault();
         const selRect=document.getElementById('track-sel-rect');
         const startX=e.clientX;
-        const startPct=clamp((startX-rect.left)/rect.width,0,1);
-        const startFrame=Math.round(startPct*anim.frames);
-        selRect.style.display='block';
-        selRect.style.left=(startPct*100)+'%';selRect.style.width='0%';
-        // Collect all keyframe frame numbers that have markers (bone or global)
+        const startFrame=pxToFrame(startX);
+        const startRatio=clamp((startX-trackLeft)/trackW,0,1);
+        selRect.style.display='block';selRect.style.marginLeft=TL_LBL_W+'px';
+        selRect.style.left=(startRatio/(rect.width/trackW)*100)+'%';selRect.style.width='0%';
         function getVisibleFrames(){
             const frames=new Set();
-            anim.keyframes.forEach(kf=>frames.add(kf.frame));
-            if(selBone){
-                (rotTracks[selBone]||[]).forEach(k=>frames.add(k.frame));
-                (offTracks[selBone]||[]).forEach(k=>frames.add(k.frame));
-            }
+            for(const bid in rotTracks)(rotTracks[bid]||[]).forEach(k=>frames.add(k.frame));
+            for(const bid in offTracks)(offTracks[bid]||[]).forEach(k=>frames.add(k.frame));
             return frames;
         }
         function updSel(ex){
-            const curPct=clamp((ex-rect.left)/rect.width,0,1);
-            const lo=Math.min(startPct,curPct),hi=Math.max(startPct,curPct);
-            selRect.style.left=(lo*100)+'%';selRect.style.width=((hi-lo)*100)+'%';
-            const fLo=Math.round(lo*anim.frames),fHi=Math.round(hi*anim.frames);
+            const curRatio=clamp((ex-trackLeft)/trackW,0,1);
+            const lo=Math.min(startRatio,curRatio),hi=Math.max(startRatio,curRatio);
+            selRect.style.left=((lo*trackW/rect.width)*100)+'%';selRect.style.width=(((hi-lo)*trackW/rect.width)*100)+'%';
+            const fLo=pxToFrame(trackLeft+lo*trackW),fHi=pxToFrame(trackLeft+hi*trackW);
             selectedKFs.clear();
             for(const f of getVisibleFrames()){if(f>=fLo&&f<=fHi)selectedKFs.add(f);}
             renderTimeline();
@@ -2598,18 +2684,14 @@ function onTrackDown(e){
         function onU(ev){
             selRect.style.display='none';
             window.removeEventListener('mousemove',onM);window.removeEventListener('mouseup',onU);
-            // If it was just a click (no drag), toggle single frame
-            if(Math.abs(ev.clientX-startX)<3){
-                toggleKFSelection(startFrame);
-            }
+            if(Math.abs(ev.clientX-startX)<3)toggleKFSelection(startFrame);
             renderTimeline();
         }
         window.addEventListener('mousemove',onM);window.addEventListener('mouseup',onU);
         return;
     }
-    // Normal click: clear selection and scrub
     clearKFSelection();
-    function upd(ex){setFrame(Math.round(clamp((ex-rect.left)/rect.width,0,1)*anim.frames));}
+    function upd(ex){setFrame(pxToFrame(ex));}
     upd(e.clientX);
     function onM(ev){upd(ev.clientX);}
     function onU(){window.removeEventListener('mousemove',onM);window.removeEventListener('mouseup',onU);}
@@ -2622,11 +2704,12 @@ function togglePlay(){playing?stopPlay():startPlay();}
 function startPlay(){playing=true;selectedKFs.clear();const btn=document.getElementById('btnPlay');btn.textContent='⏸';btn.classList.add('active');playStart=performance.now();playFrame0=curFrame;playStep();}
 function stopPlay(){playing=false;const btn=document.getElementById('btnPlay');btn.textContent='▶';btn.classList.remove('active');if(playRAF)cancelAnimationFrame(playRAF);playRAF=null;}
 function updatePlayhead(){
-    const pct=anim.frames>0?((curFrame/anim.frames)*100):0;
-    const ph=document.getElementById('playhead');if(ph)ph.style.left=pct+'%';
+    const total=anim.frames||1;
+    const ph=document.getElementById('playhead');
+    if(ph){const track=document.getElementById('track');const trkW=track?track.offsetWidth:300;const availW=trkW-TL_LBL_W,padPx=availW*TL_TPAD/100;ph.style.left=(TL_LBL_W+padPx+(curFrame/total)*(availW-2*padPx))+'px';}
     updateKFSelectionInfo();
     // Update active keyframe markers
-    document.querySelectorAll('.kf-mk-global,.kf-mk-bone').forEach(m=>{const match=m.title.match(/кадр (\d+)/i);if(match)m.classList.toggle('act',parseInt(match[1])===curFrame);});
+    document.querySelectorAll('.kf-mk-bone').forEach(m=>{const match=m.title.match(/кадр (\d+)/i);if(match)m.classList.toggle('act',parseInt(match[1])===curFrame);});
 }
 function playStep(){
     if(!playing)return;
@@ -2871,18 +2954,8 @@ async function manualLoadTexture(){
 // -- Save / Load / Export with path memory --
 async function saveProject(){
     const doc=docs[activeDocIdx]; if(!doc)return;
-    const isShape=doc.modelType==='shape'||doc.modelType==='object';
-    if(isShape){return exportVS();}
-    const json=JSON.stringify(anim,null,'\t');
-    const fn=(anim.code||'anim')+'.json';
-    if(doc.filePath){
-        await nativeWrite(json, doc.filePath);
-        doc.dirty=false; doc.name=anim.name||anim.code; renderTabBar();
-    } else {
-        const path=await nativeSave(json, fn);
-        if(path&&path!=='download'){doc.filePath=path; doc.dirty=false; doc.name=anim.name||anim.code; renderTabBar();}
-        else if(path==='download'){doc.dirty=false; doc.name=anim.name||anim.code; renderTabBar();}
-    }
+    // Always export in VS format (both shapes and standalone animations)
+    return exportVS();
 }
 async function loadProject(){
     try{
@@ -2900,14 +2973,45 @@ async function loadProject(){
             }
         } else if(obj.keyframes){
             newTab(obj.name||obj.code||'Loaded','seraph');
-            anim=obj;curFrame=0;selBone=null;
+            // Detect VS format: has quantityframes or elements in keyframes
+            const isVS=obj.quantityframes!==undefined||(obj.keyframes.length>0&&obj.keyframes.some(kf=>kf.elements));
+            if(isVS){
+                anim=parseVSAnim(obj);
+            } else {
+                anim=obj;
+            }
+            curFrame=0;selBone=null;
             buildBoneTracks();loadSettings();selectBone(null);renderTimeline();render();
             const adoc=docs[activeDocIdx];
-            adoc.anims=[anim];adoc.activeAnimIdx=0;adoc.name=obj.name||obj.code||'Loaded';
+            adoc.anims=[anim];adoc.activeAnimIdx=0;adoc.name=anim.name||anim.code||'Loaded';
             if(r.path)adoc.filePath=r.path;
             adoc.dirty=false;renderTabBar();renderAnimList();
         } else {alert('Неизвестный формат файла');}
     }catch(e){alert('Ошибка: '+e);}
+}
+// Convert VS-format animation object to internal format (requires BONES to be loaded)
+function parseVSAnim(va){
+    const kfs=[];
+    if(va.keyframes)for(const vk of va.keyframes){
+        const bones={};
+        if(vk.elements)for(const [ename,edata] of Object.entries(vk.elements)){
+            const matching=BONES.filter(b=>b.vs===ename);
+            if(!matching.length)continue;
+            const hasRot='rotationX' in edata||'rotationY' in edata||'rotationZ' in edata;
+            const hasOff='offsetX' in edata||'offsetY' in edata||'offsetZ' in edata;
+            if(!hasRot&&!hasOff)continue;
+            const r=[edata.rotationX||0,edata.rotationY||0,edata.rotationZ||0];
+            const o=[edata.offsetX||0,edata.offsetY||0,edata.offsetZ||0];
+            for(const bone of matching){
+                if(hasRot&&hasOff) bones[bone.id]=[r[0],r[1],r[2],o[0],o[1],o[2]];
+                else if(hasRot) bones[bone.id]=r;
+                else bones[bone.id]={o};
+            }
+        }
+        kfs.push({frame:vk.frame||0,bones});
+    }
+    const frm=Math.max(1,parseInt(va.quantityframes)||10);
+    return {name:va.name||'Anim',code:va.code||'anim',frames:frm,endMode:va.onAnimationEnd||'Hold',actStop:va.onActivityStopped||'EaseOut',animType:va.type||0,keyframes:kfs.length?kfs:[{frame:0,bones:{}}]};
 }
 function loadVSShape(data,fileName){
     const name=fileName?fileName.replace(/\.[^.]+$/,''):'Shape';
@@ -2915,34 +3019,15 @@ function loadVSShape(data,fileName){
     const result=parseVSShape(data);
     BONES=result.bones; rebuildBM();
     const doc=docs[activeDocIdx];
-    doc.bones=BONES; doc.bm=BM; doc.shapeMeta=result.meta; doc.modelType='shape';
+    doc.bones=BONES; doc.bm=BM; doc.shapeMeta=result.meta;
+    // Auto-detect entity model (face towards -X) vs block/item (face towards -Z)
+    const _entityBones=['UpperTorso','LowerTorso','UpperArmR','UpperArmL','Head'];
+    const _boneNames=new Set(BONES.map(b=>b.vs));
+    const _isEnt=_entityBones.filter(n=>_boneNames.has(n)).length>=3;
+    doc.modelType=_isEnt?'entity':'shape';
     // Parse animations from VS shape JSON
     if(data.animations&&Array.isArray(data.animations)&&data.animations.length>0){
-        const anims=[];
-        for(const va of data.animations){
-            const kfs=[];
-            if(va.keyframes)for(const vk of va.keyframes){
-                const bones={};
-                if(vk.elements)for(const [ename,edata] of Object.entries(vk.elements)){
-                    // Find ALL bones matching vs name (VS allows duplicate element names)
-                    const matching=BONES.filter(b=>b.vs===ename);
-                    if(!matching.length)continue;
-                    const hasRot='rotationX' in edata||'rotationY' in edata||'rotationZ' in edata;
-                    const hasOff='offsetX' in edata||'offsetY' in edata||'offsetZ' in edata;
-                    if(!hasRot&&!hasOff)continue;
-                    const r=[edata.rotationX||0,edata.rotationY||0,edata.rotationZ||0];
-                    const o=[edata.offsetX||0,edata.offsetY||0,edata.offsetZ||0];
-                    for(const bone of matching){
-                        if(hasRot&&hasOff) bones[bone.id]=[r[0],r[1],r[2],o[0],o[1],o[2]];
-                        else if(hasRot) bones[bone.id]=r;
-                        else bones[bone.id]={o};
-                    }
-                }
-                kfs.push({frame:vk.frame||0,bones});
-            }
-            const frm=Math.max(1,parseInt(va.quantityframes)||10);
-            anims.push({name:va.name||'Anim',code:va.code||'anim',frames:frm,endMode:va.onAnimationEnd||'Hold',actStop:va.onActivityStopped||'EaseOut',animType:va.type||0,keyframes:kfs.length?kfs:[{frame:0,bones:{}}]});
-        }
+        const anims=data.animations.map(va=>parseVSAnim(va));
         doc.anims=anims;doc.activeAnimIdx=0;
         anim=anims[0];
         // Auto-enable loop for Repeat animations
@@ -2950,7 +3035,9 @@ function loadVSShape(data,fileName){
         doc.editorMode='anim'; editorMode='anim';
     }
     if(!doc.anims||!doc.anims.length){doc.editorMode='model';editorMode='model';}
+    camAz=_frontAz()+0.35; camEl=0.25;
     autoCenterCamera();
+    doc.camAz=camAz; doc.camEl=camEl;
     doc.camCenterX=camCenterX; doc.camCenterY=camCenterY; doc.camCenterZ=camCenterZ; doc.camZoom=camZoom;
     buildBoneTracks();loadSettings();selectBone(null);buildBoneList();
     setEditorMode(editorMode);
@@ -2982,7 +3069,8 @@ async function exportVS(){
         fn=anim.code+'.json';
     }
     if(doc.filePath){
-        await nativeWrite(pretty, doc.filePath);
+        const wr=await nativeWrite(pretty, doc.filePath);
+        if(!wr){showNotification('⚠ Ошибка сохранения!');return;}
         doc.dirty=false;renderTabBar();
     } else {
         const path=await nativeSave(pretty, fn);
@@ -3068,9 +3156,9 @@ document.addEventListener('keydown',e=>{
     }
     if(isCtrl&&(e.code==='KeyC'||e.keyCode===67)){e.preventDefault();copyKF();}
     if(isCtrl&&(e.code==='KeyV'||e.keyCode===86)){e.preventDefault();pasteKF();}
-    if(e.key==='1'){camAz=0;camEl=0;render();}        // Вид спереди
-    if(e.key==='3'){camAz=PI/2;camEl=0;render();}      // Вид сбоку
-    if(e.key==='7'){camAz=0;camEl=PI/2-0.01;render();} // Вид сверху
+    if(e.key==='1'){camAz=_frontAz();camEl=0;render();}        // Вид спереди
+    if(e.key==='3'){camAz=_frontAz()+PI/2;camEl=0;render();}  // Вид сбоку
+    if(e.key==='7'){camAz=_frontAz();camEl=PI/2-0.01;render();} // Вид сверху
     if(e.key==='5'){resetCam();}                         // Перспектива
 },true);
 
@@ -3103,7 +3191,7 @@ function renderAnimList(){
     sel.appendChild(grpCustom);
     // Game presets group
     const all=(typeof GAME_PRESETS!=='undefined')?GAME_PRESETS:[];
-    if(all.length&&doc.modelType==='seraph'){
+    if(all.length&&(doc.modelType==='seraph'||doc.modelType==='entity')){
         const grpGame=document.createElement('optgroup');
         grpGame.label='\u0418\u0433\u0440\u043e\u0432\u044b\u0435 \u0430\u043d\u0438\u043c\u0430\u0446\u0438\u0438 ('+all.length+')';
         all.forEach((p,i)=>{
@@ -3287,7 +3375,10 @@ function nudgeInput(id,delta){
 
 // --- Left panel: face canvas interaction (drag UV rects) ---
 let fpDrag=null;
+let _fpMoveHandler=null,_fpUpHandler=null;
 function initFaceCanvasEvents(){
+    // Remove old document-level listeners to prevent accumulation
+    if(_fpMoveHandler){document.removeEventListener('mousemove',_fpMoveHandler);document.removeEventListener('mouseup',_fpUpHandler);}
     document.querySelectorAll('#uv-left .uv-fp').forEach(panel=>{
         const cv=panel.querySelector('.uv-fp-canvas');if(!cv)return;
         const fn=panel.dataset.face;
@@ -3322,7 +3413,7 @@ function initFaceCanvasEvents(){
             uvSelectFaceLeft(fn);
         });
     });
-    document.addEventListener('mousemove',e=>{
+    _fpMoveHandler=function(e){
         if(!fpDrag)return;
         if(!selBone||!BM[selBone]||!BM[selBone]._faces||!BM[selBone]._faces[fpDrag.face])return;
         const panel=document.querySelector(`#uv-left .uv-fp[data-face="${fpDrag.face}"]`);
@@ -3345,8 +3436,10 @@ function initFaceCanvasEvents(){
             else{uv[2]=Math.round(orig[2]+dx);uv[3]=Math.round(orig[3]+dy);}
         }
         markDirty();fillUvEditor();renderFacePreviews();render();
-    });
-    document.addEventListener('mouseup',()=>{fpDrag=null;});
+    };
+    _fpUpHandler=function(){fpDrag=null;};
+    document.addEventListener('mousemove',_fpMoveHandler);
+    document.addEventListener('mouseup',_fpUpHandler);
 }
 
 // --- Left panel: face preview canvases ---
