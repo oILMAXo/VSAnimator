@@ -671,7 +671,7 @@ function parseVSShape(data){
             const from=el.from?[...el.from]:[0,0,0];
             const to=el.to?[...el.to]:[0,0,0];
             const ro=el.rotationOrigin?[...el.rotationOrigin]:[(from[0]+to[0])/2,(from[1]+to[1])/2,(from[2]+to[2])/2];
-            const rr=[el.rotationX||0,el.rotationY||0,el.rotationZ||0];
+            const rr=[el.rotationX||0,-(el.rotationY||0),el.rotationZ||0];
             const isZero=from[0]===to[0]&&from[1]===to[1]&&from[2]===to[2];
             bones.push({id,vs:name,p:parentId,from,to,ro,rr,c:DEPTH_COLORS[depth%DEPTH_COLORS.length],d:depth,norender:isZero,_faces:el.faces||null});
             if(el.stepParentName) stepParents.push({id,stepName:el.stepParentName});
@@ -697,7 +697,7 @@ function buildVSShapeJson(){
         el.from=[...bone.from]; el.to=[...bone.to];
         el.rotationOrigin=[...bone.ro];
         if(bone.rr[0])el.rotationX=bone.rr[0];
-        if(bone.rr[1])el.rotationY=bone.rr[1];
+        if(bone.rr[1])el.rotationY=-bone.rr[1];
         if(bone.rr[2])el.rotationZ=bone.rr[2];
         if(bone._faces)el.faces=JSON.parse(JSON.stringify(bone._faces));
         else{
@@ -3000,12 +3000,12 @@ function parseVSAnim(va){
             const hasRot='rotationX' in edata||'rotationY' in edata||'rotationZ' in edata;
             const hasOff='offsetX' in edata||'offsetY' in edata||'offsetZ' in edata;
             if(!hasRot&&!hasOff)continue;
-            const r=[edata.rotationX||0,edata.rotationY||0,edata.rotationZ||0];
+            const r=[edata.rotationX||0,-(edata.rotationY||0),edata.rotationZ||0];
             const o=[edata.offsetX||0,edata.offsetY||0,edata.offsetZ||0];
             for(const bone of matching){
                 if(hasRot&&hasOff) bones[bone.id]=[r[0],r[1],r[2],o[0],o[1],o[2]];
                 else if(hasRot) bones[bone.id]=r;
-                else bones[bone.id]=[0,0,0,o[0],o[1],o[2]];
+                else bones[bone.id]={o};
             }
         }
         kfs.push({frame:vk.frame||0,bones});
@@ -3090,7 +3090,7 @@ function generateVSJsonFromAnim(a){
             let rot=[0,0,0],off=[0,0,0];
             if(Array.isArray(val)){rot=[val[0]||0,val[1]||0,val[2]||0];if(val.length>=6)off=[val[3]||0,val[4]||0,val[5]||0];}
             else if(val&&typeof val==='object'){if(val.r)rot=val.r;if(val.o)off=val.o;}
-            if(rot[0]!==0)el.rotationX=rot[0];if(rot[1]!==0)el.rotationY=rot[1];if(rot[2]!==0)el.rotationZ=rot[2];
+            if(rot[0]!==0)el.rotationX=rot[0];if(rot[1]!==0)el.rotationY=-rot[1];if(rot[2]!==0)el.rotationZ=rot[2];
             if(off[0]!==0)el.offsetX=off[0];if(off[1]!==0)el.offsetY=off[1];if(off[2]!==0)el.offsetZ=off[2];
             if(Object.keys(el).length>0){
                 if(!elements[bone.vs])elements[bone.vs]=el;
