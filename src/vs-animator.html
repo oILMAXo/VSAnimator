@@ -3005,7 +3005,7 @@ function parseVSAnim(va){
             for(const bone of matching){
                 if(hasRot&&hasOff) bones[bone.id]=[r[0],r[1],r[2],o[0],o[1],o[2]];
                 else if(hasRot) bones[bone.id]=r;
-                else bones[bone.id]={o};
+                else bones[bone.id]=[0,0,0,o[0],o[1],o[2]];
             }
         }
         kfs.push({frame:vk.frame||0,bones});
